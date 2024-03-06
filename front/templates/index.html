@@ -1,0 +1,42 @@
+<!--index.html-->
+{{ template "header.html" .}}
+<script src="/lobby.js?v={{ .version }}"></script>
+
+<div id="modalName" class="modal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title">Будь-ласка, вкажи ім'я</h5>
+          <button id="modalClose" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+            <input type="text" class="form-control" id="inputName">
+        </div>
+        <div class="modal-footer">
+          <button type="button" id="btnRand" class="btn btn-secondary" data-dismiss="modal">Випадково</button>
+          <button type="button" id="btnSubmit" class="btn btn-primary">Підтвердити</button>
+        </div>
+      </div>
+    </div>
+</div>
+
+<div class="px-4 py-5 my-5 text-center">
+    <!-- <img class="d-block mx-auto mb-4" src="/docs/5.3/assets/brand/bootstrap-logo.svg" alt="" width="72" height="57"> -->
+    <h1 class="display-5 fw-bold text-body-emphasis">Саморобна монополія</h1>
+    <div class="col-lg-6 mx-auto">
+      <p class="lead mb-4">
+        Для того, щоб запустити гру - достатньо створити лоббі і обрати налаштування за бажанням. Якщо твій друг вже створив лоббі - просто обери його зі списку.
+      </p>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <button type="button" onclick="$('#createLobbyContainer').show(); $('#connectToLobbyContainer').hide()" class="btn btn-secondary btn-lg px-4 gap-3">Створити лоббі</button>
+        <button type="button" id="connectToLobbyBtn" class="btn btn-secondary btn-lg px-4">Приєднатися</button>
+      </div>
+    </div>
+</div>
+<p id="errorMenu"></p>
+
+
+
+{{ template "createLobby.html" .}}
+{{ template "connectToLobby.html" .}}
+{{ template "footer.html" .}}

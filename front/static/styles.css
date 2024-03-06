@@ -1,0 +1,95 @@
+/* Styles for the frame */
+.frame {
+    width: 70%;  /* Adjust as needed */
+    /* height: 60%; */
+    margin: 0 auto;
+    border: 10px solid #000; /* Black border */
+    /*background-color: #f2f2f2; /* Light gray background */
+}
+
+/* Styles for the board */
+/* .board {
+    height: 100%;
+} */
+
+/* Styles for corner spaces */
+.corner {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+    border: 2px solid #000;
+    background-color: #fff;
+}
+
+/* Styles for specific corner spaces */
+.go { background-color: #ffc107; } /* Yellow */
+.jail { background-color: #e74c3c; } /* Red */
+.free-parking { background-color: #27ae60; } /* Green */
+.go-to-jail { background-color: #3498db; } /* Blue */
+
+/* Styles for property spaces */
+.property {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    border: 2px solid #000;
+    background-color: #fff;
+    cursor: pointer;
+}
+
+/* Styles for specific property colors */
+.brown { background-color: #786048; } /* Brown */
+.light-blue { background-color: #77c8e3; } /* Light Blue */
+.pink { background-color: #e18eb8; } /* Pink */
+.orange { background-color: #c9804f; } /* Orange */
+.red { background-color: #c75252; } /* Red */
+.yellow { background-color: #d4d46b; } /* Yellow */
+.green { background-color: #4aab6a; } /* Green */
+.blue { background-color: #4f4fb0; } /* Blue */
+
+/* Styles for special spaces */
+.special {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    border: 2px solid #000;
+    background-color: #ddd; /* Light gray */
+    cursor: pointer;
+}
+
+/* Styles for specific special spaces */
+.community-chest { background-color: #ffcc00; } /* Light Orange */
+.income-tax { background-color: rgb(23, 154, 37); } /* Light Red */
+.chance { background-color: #ffcc00; } /* Light Blue */
+.luxury-tax { background-color: #993399; } /* Purple */
+
+/* Styles for railroad spaces */
+.railroad {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    border: 2px solid #000;
+    background-color: #c0c0c0; /* Silver */
+    cursor: pointer;
+}
+
+/* Styles for utility spaces */
+.utility {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 14px;
+    font-weight: bold;
+    border: 2px solid #000;
+    background-color: #ffcc00; /* Light Orange */
+    cursor: pointer;
+}
