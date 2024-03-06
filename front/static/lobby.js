@@ -2,18 +2,6 @@ $("document").ready(() => {
     window.WS = new FrontWS()
     window.WS.connect();
 
-    var sessionCookie = Cookies.get('sessionID');
-    if (sessionCookie == undefined || sessionCookie == "") {
-        $('#lobbyCreateBtn').prop( "disabled", false );
-        $('#btnName').prop( "disabled", false );
-    } else {
-        $('#lobbyCreateBtn').prop( "disabled", true );
-        $('#btnName').prop( "disabled", true ); // you cannot change name with active session
-        $('#createdP').show();
-        document.getElementById("navSessionID").innerHTML = sessionCookie;
-    }
-    
-
     $("#lobbyCreateBtn").click(() => {
         var fieldType = $("#fieldType").val()
         
@@ -28,24 +16,25 @@ $("document").ready(() => {
             fastGame: fastGame,
             experimental: experimental,
             playerName: Cookies.get('name'),
+            sessionID: Cookies.get('sessionID')
         }, function (result) {
             if (result.error != null) {
                 alert(result.error)
                 alert(result.message)
                 errorAlert(result.message);
             } else {
-                Cookies.set('sessionID', result.sessionID, { expires: 365});
+                console.log(result.lobbyID)
+                Cookies.set('lobbyID', result.lobbyID, { expires: 365});
                 $('#lobbyCreateBtn').prop( "disabled", true );
                 $('#btnName').prop( "disabled", true ); // you cannot change name with active session
                 $('#createdP').show();
-                document.getElementById("navSessionID").innerHTML = sessionCookie;
                 $('#createLobbyContainer').hide()
                 $('#connectToLobbyContainer').show()
                 window.getLobbies()
 
                 var wsMsg = JSON.stringify({
-                    sessionID: result.sessionID,
-                    lobbyID: result.sessionID,
+                    sessionID: Cookies.get('sessionID'),
+                    lobbyID: result.lobbyID,
                     action: 1
                 })
                 window.WS.sendMsg(wsMsg)
@@ -64,6 +53,7 @@ $("document").ready(() => {
     });
     
     window.getLobbies = function getLobbies() {
+        console.log("window.getLobbies",Cookies.get('sessionID'))
         $.get( "/api/v1/getLobbiesTable", {
             sessionID: Cookies.get('sessionID'),
         }, function(data) {

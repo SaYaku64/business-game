@@ -11,6 +11,7 @@ import (
 func (r *Router) CreateLobbyHandler(c *gin.Context) {
 	fieldType := c.PostForm("fieldType")
 	playerName := c.PostForm("playerName")
+	sessionID := c.PostForm("sessionID")
 	fastGame, err1 := strconv.ParseBool(c.PostForm("fastGame"))
 	experimental, err2 := strconv.ParseBool(c.PostForm("experimental"))
 
@@ -20,34 +21,33 @@ func (r *Router) CreateLobbyHandler(c *gin.Context) {
 		return
 	}
 
-	sessionID := r.lm.CreateLobby(
+	lobbyID := r.lm.CreateLobby(
 		playerName,
+		sessionID,
 		fieldType,
 		fastGame,
 		experimental,
 	)
 
-	c.Set("sessionID", sessionID)
+	c.JSON(http.StatusOK, gin.H{"lobbyID": lobbyID})
+}
 
-	c.JSON(http.StatusOK, gin.H{"sessionID": sessionID})
+func (r *Router) GetSessionID(c *gin.Context) {
+	c.JSON(http.StatusOK, gin.H{"sessionID": r.generateSessionToken()})
 }
 
 func (r *Router) GetLobbiesTable(c *gin.Context) {
-	sessionID := c.GetString("sessionID")
-	if sessionID == "" {
-		sessionID = c.Query("sessionID")
-	}
+	sessionID := c.Query("sessionID")
+
+	alert.Info("GetLobbiesTable", sessionID)
 
 	c.JSON(http.StatusOK, gin.H{"lobbiesTable": r.lm.GetLobbiesTableResponse(sessionID)})
 }
 
 func (r *Router) RemoveLobby(c *gin.Context) {
-	sessionID := c.GetString("sessionID")
-	if sessionID == "" {
-		sessionID = c.Query("sessionID")
-	}
+	lobbyID := c.Query("lobbyID")
 
-	r.lm.RemoveLobby(sessionID)
+	r.lm.RemoveLobby(lobbyID)
 
 	c.Status(http.StatusOK)
 }

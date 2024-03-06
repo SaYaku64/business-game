@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"sync"
 	"time"
+
+	"github.com/SaYaku64/monopoly/internal/alert"
 )
 
 const (
@@ -28,11 +30,13 @@ const (
 
 type (
 	LobbyModule struct {
-		lobbies map[string]*lobby // key - SessionID1
+		lobbies map[string]*lobby // key - lobbyID
 		lMux    sync.RWMutex
 	}
 
 	lobby struct {
+		lobbyID string
+
 		sessionID1  string
 		sessionID2  string
 		playerName1 string
@@ -64,16 +68,18 @@ func CreateLobbyModule() *LobbyModule {
 
 func (lm *LobbyModule) CreateLobby(
 	playerName string,
+	sessionID string,
 	fieldType string,
 	fastGame bool,
 	experimental bool,
 ) (
-	plrSessionID string,
+	lobbyID string,
 ) {
-	plrSessionID = generateSessionID()
+	lobbyID = generateLobbyID()
 
 	gameLobby := &lobby{
-		sessionID1:  plrSessionID,
+		lobbyID:     lobbyID,
+		sessionID1:  sessionID,
 		playerName1: playerName,
 
 		gameSettings: Settings{
@@ -91,20 +97,6 @@ func (lm *LobbyModule) CreateLobby(
 func (lm *LobbyModule) GetLobbiesTableResponse(sessionID string) string {
 	resp := ""
 
-	// // test
-	// gameLobby := &lobby{
-	// 	sessionID1:  "123123",
-	// 	playerName1: "playerName",
-
-	// 	gameSettings: Settings{
-	// 		FieldType:    "test",
-	// 		FastGame:     true,
-	// 		Experimental: true,
-	// 	},
-	// }
-	// lm.lobbies["123123"] = gameLobby
-	// // test
-
 	lm.lMux.RLock()
 	for i := range lm.lobbies {
 		resp += lm.lobbies[i].formatTableResponse(sessionID)
@@ -114,23 +106,24 @@ func (lm *LobbyModule) GetLobbiesTableResponse(sessionID string) string {
 	return resp
 }
 
-func (lm *LobbyModule) RemoveLobby(sessionID string) {
-	lm.removeFromMap(sessionID)
+func (lm *LobbyModule) RemoveLobby(lobbyID string) {
+	lm.removeFromMap(lobbyID)
 }
 
-func generateSessionID() string {
-	return fmt.Sprint(time.Now().UnixNano())
+func generateLobbyID() string {
+	long := fmt.Sprint(time.Now().UnixNano() / 100)
+	return long[len(long)-3:]
 }
 
 func (lm *LobbyModule) addToMap(gameLobby *lobby) {
 	lm.lMux.Lock()
-	lm.lobbies[gameLobby.sessionID1] = gameLobby
+	lm.lobbies[gameLobby.lobbyID] = gameLobby
 	lm.lMux.Unlock()
 }
 
-func (lm *LobbyModule) removeFromMap(sessionID string) {
+func (lm *LobbyModule) removeFromMap(lobbyID string) {
 	lm.lMux.Lock()
-	delete(lm.lobbies, sessionID)
+	delete(lm.lobbies, lobbyID)
 	lm.lMux.Unlock()
 }
 
@@ -147,6 +140,9 @@ func (lm *LobbyModule) removeFromMap(sessionID string) {
 // }
 
 func (l *lobby) formatTableResponse(sessionID string) string {
+
+	alert.Info("formatTableResponse", l.lobbyID, l.sessionID1, sessionID)
+
 	fastGame := "<i>" + dashSvg + "</i>"
 	if l.gameSettings.FastGame {
 		fastGame = "<i>" + checkSvg + "</i>"
@@ -157,7 +153,7 @@ func (l *lobby) formatTableResponse(sessionID string) string {
 		experimental = "<i>" + checkSvg + "</i>"
 	}
 
-	action := "<i onclick='window.connectLobby(\"" + l.sessionID1 + "\");' style=\"cursor: pointer;\">" + connectSvg + "</i>"
+	action := "<i onclick='window.connectLobby(\"" + l.lobbyID + "\");' style=\"cursor: pointer;\">" + connectSvg + "</i>"
 	selection := ""
 	if l.sessionID1 == sessionID {
 		action = "<i onclick='window.removeLobby();' style=\"cursor: pointer;\">" + deleteSvg + "</i>"

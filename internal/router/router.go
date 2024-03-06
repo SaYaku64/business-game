@@ -47,6 +47,7 @@ func (r *Router) initializeRoutes() {
 
 	apiV1 := r.engine.Group("/api/v1")
 	apiV1.GET("/randomName", naming.GetRandName)
+	apiV1.GET("/getSessionID", r.GetSessionID)
 	apiV1.POST("/createLobby", r.CreateLobbyHandler)
 	apiV1.GET("/getLobbiesTable", r.GetLobbiesTable)
 	apiV1.GET("/removeLobby", r.RemoveLobby)

@@ -123,7 +123,7 @@ func (i *wsReader) read() {
 		i.sessionID2 = msg.SessionID
 		alert.Info("connecting", msg.SessionID, msg.LobbyID)
 
-		i.writeBoth(msg.LobbyID)
+		i.writeBoth(msg.LobbyID, msg.SessionID)
 
 		return
 	}
@@ -148,11 +148,14 @@ func (i *wsReader) read() {
 	// log.Println(i.name + " " + string(byteMsg))
 }
 
-func (i *wsReader) writeBoth(lobbyID string) {
+func (i *wsReader) writeBoth(lobbyID, sessionID string) {
 	for index := range allWsReaders {
-		if allWsReaders[index].sessionID1 == lobbyID {
-			i.writeMsg("redirect, please connected: " + lobbyID)
-			allWsReaders[index].writeMsg("redirect, please creator: " + lobbyID)
+		if allWsReaders[index].lobbyID == lobbyID {
+			i.lobbyID = lobbyID
+			allWsReaders[index].sessionID2 = sessionID
+
+			i.writeMsg("redirect, please connected: " + lobbyID + " " + sessionID)
+			allWsReaders[index].writeMsg("redirect, please creator: " + lobbyID + " " + allWsReaders[index].sessionID1)
 
 			return
 		}

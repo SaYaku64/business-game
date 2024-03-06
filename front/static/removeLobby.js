@@ -1,20 +1,18 @@
 $("document").ready(() => {
     window.removeLobby = function removeLobby() {
-        var sessionToDelete = Cookies.get("sessionID")
+        var lobbyToDelete = Cookies.get("lobbyID")
 
         $.get( "/api/v1/removeLobby", {
-            sessionID: sessionToDelete,
+            lobbyID: lobbyToDelete,
         }, function() {
-            Cookies.set("sessionID", "", { expires: 0});
+            Cookies.set("lobbyID", "", { expires: 0});
             $("#lobbyCreateBtn").prop( "disabled", false );
             $("#btnName").prop( "disabled", false ); // you cannot change name with active session
             $("#createdP").hide();
-            document.getElementById("navSessionID").innerHTML = "";
             window.getLobbies()
             
             var wsMsg = JSON.stringify({
-                sessionID: sessionToDelete,
-                lobbyID: sessionToDelete,
+                lobbyID: lobbyToDelete,
                 action: 3
             })
             window.WS.sendMsg(wsMsg)
