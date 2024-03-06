@@ -24,22 +24,6 @@ const (
 	deleteSvg = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-slash-square-fill" viewBox="0 0 16 16">
 	<path d="M2 0a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V2a2 2 0 0 0-2-2zm9.354 5.354-6 6a.5.5 0 0 1-.708-.708l6-6a.5.5 0 0 1 .708.708"/>
   </svg>`
-
-	queryJS = `$.get( "/api/v1/removeLobby", {
-	sessionID: Cookies.get("sessionID"),//$(this).attr("sessionID"),
-}, function() {
-	console.log("removeLobby function")
-	Cookies.set("sessionID", "", { expires: 0});
-	$("#lobbyCreateBtn").prop( "disabled", false );
-	$("#btnName").prop( "disabled", false ); // you cannot change name with active session
-	$("#createdP").hide();
-	document.getElementById("navSessionID").innerHTML = "";
-	$.get( "/api/v1/getLobbiesTable", {
-		sessionID: Cookies.get("sessionID"),
-	}, function(data) {
-		document.getElementById("tableLobbies").innerHTML = data.lobbiesTable
-	});
-});`
 )
 
 type (
@@ -107,19 +91,19 @@ func (lm *LobbyModule) CreateLobby(
 func (lm *LobbyModule) GetLobbiesTableResponse(sessionID string) string {
 	resp := ""
 
-	// test
-	gameLobby := &lobby{
-		sessionID1:  "123123",
-		playerName1: "playerName",
+	// // test
+	// gameLobby := &lobby{
+	// 	sessionID1:  "123123",
+	// 	playerName1: "playerName",
 
-		gameSettings: Settings{
-			FieldType:    "test",
-			FastGame:     true,
-			Experimental: true,
-		},
-	}
-	lm.lobbies["123123"] = gameLobby
-	// test
+	// 	gameSettings: Settings{
+	// 		FieldType:    "test",
+	// 		FastGame:     true,
+	// 		Experimental: true,
+	// 	},
+	// }
+	// lm.lobbies["123123"] = gameLobby
+	// // test
 
 	lm.lMux.RLock()
 	for i := range lm.lobbies {
@@ -173,10 +157,10 @@ func (l *lobby) formatTableResponse(sessionID string) string {
 		experimental = "<i>" + checkSvg + "</i>"
 	}
 
-	action := "<i id=\"connectAndPlay\" sessionID=" + sessionID + " style=\"cursor: pointer;\">" + connectSvg + "</i>"
+	action := "<i onclick='window.connectLobby(\"" + l.sessionID1 + "\");' style=\"cursor: pointer;\">" + connectSvg + "</i>"
 	selection := ""
 	if l.sessionID1 == sessionID {
-		action = "<i class=\"removeLobby\" onclick='" + queryJS + "' style=\"cursor: pointer;\">" + deleteSvg + "</i>"
+		action = "<i onclick='window.removeLobby();' style=\"cursor: pointer;\">" + deleteSvg + "</i>"
 		selection = "class=\"table-info\""
 	}
 
@@ -191,6 +175,6 @@ func (l *lobby) formatTableResponse(sessionID string) string {
 
 	return result
 
-	//$(this).attr('terr')
+	//$(this).attr('sessionID')
 
 }

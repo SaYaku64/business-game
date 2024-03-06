@@ -1,4 +1,7 @@
 $("document").ready(() => {
+    window.WS = new FrontWS()
+    window.WS.connect();
+
     var sessionCookie = Cookies.get('sessionID');
     if (sessionCookie == undefined || sessionCookie == "") {
         $('#lobbyCreateBtn').prop( "disabled", false );
@@ -38,7 +41,14 @@ $("document").ready(() => {
                 document.getElementById("navSessionID").innerHTML = sessionCookie;
                 $('#createLobbyContainer').hide()
                 $('#connectToLobbyContainer').show()
-                getLobbies()
+                window.getLobbies()
+
+                var wsMsg = JSON.stringify({
+                    sessionID: result.sessionID,
+                    lobbyID: result.sessionID,
+                    action: 1
+                })
+                window.WS.sendMsg(wsMsg)
             }
         }).fail(function(result) {
             errorAlert(result.responseJSON.error);
@@ -50,34 +60,16 @@ $("document").ready(() => {
         $('#connectToLobbyContainer').show(); 
         $('#createLobbyContainer').hide()
 
-        getLobbies()
+        window.getLobbies()
     });
     
-    function getLobbies() {
+    window.getLobbies = function getLobbies() {
         $.get( "/api/v1/getLobbiesTable", {
             sessionID: Cookies.get('sessionID'),
         }, function(data) {
             document.getElementById("tableLobbies").innerHTML = data.lobbiesTable
         });
     };
-
-    // $(".removeLobby").click(() => {
-    //     console.log("removeLobby click");
-    //     // removeLobby()
-    //     $.get( "/api/v1/removeLobby", {
-    //         sessionID: Cookies.get('sessionID'),//$(this).attr('sessionID'),
-    //     }, function() {
-    //         console.log("removeLobby function");
-    //         Cookies.set('sessionID', "", { expires: 0});
-    //         $('#lobbyCreateBtn').prop( "disabled", false );
-    //         $('#btnName').prop( "disabled", false ); // you cannot change name with active session
-    //         $('#createdP').hide();
-    //         document.getElementById("navSessionID").innerHTML = "";
-    //         getLobbies()
-    //     });
-        
-    //     console.log("removeLobby end");
-    // });
 
     function errorAlert(message) {
         document.getElementById("errorMenu").innerHTML = "<p class=\"bg-danger dropdown-item text-white font-weight-bold\">"+message+"</p>";
