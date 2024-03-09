@@ -33,6 +33,9 @@ class FrontWS{
 
     acceptMsg(msg){
         console.log("acceptMsg", msg)
+        if (msg == "redirect") {
+            window.redirectToLobby();
+        }
     }
 
     connect(){

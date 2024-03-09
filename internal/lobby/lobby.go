@@ -94,6 +94,45 @@ func (lm *LobbyModule) CreateLobby(
 	return
 }
 
+func (lm *LobbyModule) AddPlayerToLobby(lobbyID, playerName, sessionID string) error {
+	lobby, found := lm.getLobbyByLobbyID(lobbyID)
+	if !found {
+		return fmt.Errorf("lobby not found")
+	}
+
+	lm.lMux.Lock()
+	lobby.playerName2 = playerName
+	lobby.sessionID2 = sessionID
+	lobby.isStarted = true
+	lm.lMux.Unlock()
+
+	alert.Info("AddPlayerToLobby lm.lobbies", lm.lobbies)
+	return nil
+}
+
+func (lm *LobbyModule) CheckActiveGame(lobbyID, playerName, sessionID string) bool {
+	lobby, found := lm.getLobbyByLobbyID(lobbyID)
+	if !found {
+		return false
+	}
+
+	if playerName != lobby.playerName1 && playerName != lobby.playerName2 {
+		return false
+	}
+
+	if sessionID != lobby.sessionID1 && sessionID != lobby.sessionID2 {
+		return false
+	}
+
+	return lobby.isStarted
+}
+
+func (lm *LobbyModule) IsLobbyExists(lobbyID string) (exists bool) {
+	_, exists = lm.getLobbyByLobbyID(lobbyID)
+
+	return
+}
+
 func (lm *LobbyModule) GetLobbiesTableResponse(sessionID string) string {
 	resp := ""
 
@@ -112,7 +151,7 @@ func (lm *LobbyModule) RemoveLobby(lobbyID string) {
 
 func generateLobbyID() string {
 	long := fmt.Sprint(time.Now().UnixNano() / 100)
-	return long[len(long)-3:]
+	return long[len(long)-5:]
 }
 
 func (lm *LobbyModule) addToMap(gameLobby *lobby) {
@@ -127,19 +166,22 @@ func (lm *LobbyModule) removeFromMap(lobbyID string) {
 	lm.lMux.Unlock()
 }
 
-// func (lm *LobbyModule) getLobbyBySessionID(sessionID string) *lobby {
-// 	lm.lMux.RLock()
-// 	gameLobby, ok := lm.lobbies[sessionID]
-// 	lm.lMux.RUnlock()
+func (lm *LobbyModule) getLobbyByLobbyID(lobbyID string) (gameLobby *lobby, ok bool) {
+	lm.lMux.RLock()
+	gameLobby, ok = lm.lobbies[lobbyID]
+	lm.lMux.RUnlock()
 
-// 	if !ok {
-// 		return &lobby{}
-// 	}
+	if !ok {
+		gameLobby = &lobby{}
+	}
 
-// 	return gameLobby
-// }
+	return
+}
 
 func (l *lobby) formatTableResponse(sessionID string) string {
+	if l.isStarted {
+		return ""
+	}
 
 	alert.Info("formatTableResponse", l.lobbyID, l.sessionID1, sessionID)
 

@@ -53,10 +53,38 @@ func (r *Router) RemoveLobby(c *gin.Context) {
 }
 
 func (r *Router) ConnectLobby(c *gin.Context) {
-	sessionID := c.Query("sessionID")
-	lobbyID := c.Query("lobbyID")
+	lobbyID := c.PostForm("lobbyID")
+	playerName := c.PostForm("playerName")
+	sessionID := c.PostForm("sessionID")
 
-	alert.Info("ConnectLobby", sessionID, lobbyID)
+	err := r.lm.AddPlayerToLobby(lobbyID, playerName, sessionID)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
 
 	c.Status(http.StatusOK)
+}
+
+func (r *Router) CheckActiveGame(c *gin.Context) {
+	lobbyID := c.PostForm("lobbyID")
+	playerName := c.PostForm("playerName")
+	sessionID := c.PostForm("sessionID")
+
+	active := r.lm.CheckActiveGame(lobbyID, playerName, sessionID)
+	if active {
+		c.Status(http.StatusOK)
+	} else {
+		c.Status(http.StatusBadRequest)
+	}
+}
+
+func (r *Router) IsLobbyExists(c *gin.Context) {
+	lobbyID := c.PostForm("lobbyID")
+
+	active := r.lm.IsLobbyExists(lobbyID)
+	if active {
+		c.Status(http.StatusOK)
+	} else {
+		c.Status(http.StatusBadRequest)
+	}
 }

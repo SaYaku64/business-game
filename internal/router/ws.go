@@ -154,8 +154,8 @@ func (i *wsReader) writeBoth(lobbyID, sessionID string) {
 			i.lobbyID = lobbyID
 			allWsReaders[index].sessionID2 = sessionID
 
-			i.writeMsg("redirect, please connected: " + lobbyID + " " + sessionID)
-			allWsReaders[index].writeMsg("redirect, please creator: " + lobbyID + " " + allWsReaders[index].sessionID1)
+			i.writeMsg("redirect")
+			allWsReaders[index].writeMsg("redirect")
 
 			return
 		}

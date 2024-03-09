@@ -46,5 +46,11 @@ func (r *Router) showIndexPage(c *gin.Context) {
 	r.render(c, "index.html", gin.H{
 		"title": "Monopoly",
 	})
-	// c.Set("logged", true)
+}
+
+func (r *Router) showGamePage(c *gin.Context) {
+	r.render(c, "game.html", gin.H{
+		"title":   "Monopoly",
+		"playing": true,
+	})
 }

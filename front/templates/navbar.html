@@ -22,10 +22,13 @@
             <a class="nav-link disabled" aria-disabled="true">Disabled</a>
           </li> -->
         </ul>
+        {{ if .playing }} 
+        {{else}}
         <div class="d-flex">
           <input class="form-control me-2" disabled placeholder="Name" id="nameField">
           <button class="btn btn-outline-primary" id="btnName">Ім'я</button>
         </div>
+        {{end}}
       </div>
     </div>
   </nav>

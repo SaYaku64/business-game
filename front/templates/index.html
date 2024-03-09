@@ -1,5 +1,7 @@
 <!--index.html-->
 {{ template "header.html" .}}
+<script src="/removeLobby.js?v={{ .version }}"></script>
+<script src="/connectLobby.js?v={{ .version }}"></script>
 <script src="/lobby.js?v={{ .version }}"></script>
 
 <div id="modalName" class="modal" tabindex="-1" aria-hidden="true">
@@ -30,6 +32,10 @@
       <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
         <button type="button" onclick="$('#createLobbyContainer').show(); $('#connectToLobbyContainer').hide(); window.checkActiveLobby();" class="btn btn-secondary btn-lg px-4 gap-3">Створити лоббі</button>
         <button type="button" id="connectToLobbyBtn" class="btn btn-secondary btn-lg px-4">Приєднатися</button>
+      </div>
+      <br>
+      <div class="d-grid gap-2 d-sm-flex justify-content-sm-center">
+        <a href="/game" id="returnToGameLink" class="btn btn-success btn-lg px-4" style="display: none;">Повернутись до гри</a>
       </div>
     </div>
 </div>

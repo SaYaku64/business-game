@@ -1,20 +1,20 @@
 $("document").ready(() => {
     window.connectLobby = function connectLobby(lobbyID) {
         var sessionID = Cookies.get("sessionID")
-        // var lobbyID = $(this).attr('sessionID')
-        console.log("api/v1/connectLobby lobbyID", lobbyID)
 
-        $.get( "/api/v1/connectLobby", {
-            sessionID: sessionID,
-            lobbyID: lobbyID
-        }, function() {
-            // Cookies.set("sessionID", "", { expires: 0});
-            // $("#lobbyCreateBtn").prop( "disabled", false );
-            // $("#btnName").prop( "disabled", false ); // you cannot change name with active session
-            // $("#createdP").hide();
-            // document.getElementById("navSessionID").innerHTML = "";
-            // window.getLobbies()
-            console.log("api/v1/connectLobby success")
+        $.post( "/api/v1/connectLobby", {
+            lobbyID: lobbyID,
+            playerName: Cookies.get("name"),
+            sessionID: sessionID
+        }, function(result) {
+            if (result.error != null) {
+                window.errorAlert(result.message);
+
+                return
+            }
+            Cookies.set('lobbyID', lobbyID, { expires: 365});
+
+            window.getLobbies();
             
             var wsMsg = JSON.stringify({
                 sessionID: sessionID,
@@ -22,6 +22,14 @@ $("document").ready(() => {
                 action: 2
             })
             window.WS.sendMsg(wsMsg)
-        });
+
+        }).fail(function(result) {
+            window.errorAlert(result.responseJSON.error);
+          });
+    };
+
+    
+    window.redirectToLobby = function redirectToLobby() {
+        window.location.href = "/game"
     };
 });

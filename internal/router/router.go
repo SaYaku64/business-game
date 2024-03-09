@@ -43,6 +43,7 @@ func (r *Router) initializeRoutes() {
 	r.engine.Use()
 
 	r.engine.GET("/", r.showIndexPage)
+	r.engine.GET("/game", r.showGamePage)
 	r.engine.GET("/ws", r.HandleWebSocket)
 
 	apiV1 := r.engine.Group("/api/v1")
@@ -51,7 +52,10 @@ func (r *Router) initializeRoutes() {
 	apiV1.POST("/createLobby", r.CreateLobbyHandler)
 	apiV1.GET("/getLobbiesTable", r.GetLobbiesTable)
 	apiV1.GET("/removeLobby", r.RemoveLobby)
-	apiV1.GET("/connectLobby", r.ConnectLobby)
+	apiV1.POST("/connectLobby", r.ConnectLobby)
+	// apiV1.GET("/redirectToLobby", r.RedirectToLobby)
+	apiV1.POST("/checkActiveGame", r.CheckActiveGame)
+	apiV1.POST("/isLobbyExists", r.IsLobbyExists)
 
 	// router.POST("/login", performLogin)
 	// router.POST("/register", register)

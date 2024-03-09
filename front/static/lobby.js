@@ -2,6 +2,24 @@ $("document").ready(() => {
     window.WS = new FrontWS()
     window.WS.connect();
 
+    $.post( "/api/v1/isLobbyExists", {
+        lobbyID: Cookies.get('lobbyID')
+    }).fail(function() {
+        Cookies.remove('lobbyID');
+    });
+
+    if (Cookies.get('lobbyID') != undefined && Cookies.get('lobbyID') != "") {
+        $.post( "/api/v1/checkActiveGame", {
+            lobbyID: Cookies.get('lobbyID'),
+            playerName: Cookies.get("name"),
+            sessionID: Cookies.get('sessionID')
+        }, function () {
+            $('#returnToGameLink').show();
+        });
+    }
+
+    
+
     $("#lobbyCreateBtn").click(() => {
         var fieldType = $("#fieldType").val()
         
@@ -19,9 +37,7 @@ $("document").ready(() => {
             sessionID: Cookies.get('sessionID')
         }, function (result) {
             if (result.error != null) {
-                alert(result.error)
-                alert(result.message)
-                errorAlert(result.message);
+                window.errorAlert(result.message);
             } else {
                 console.log(result.lobbyID)
                 Cookies.set('lobbyID', result.lobbyID, { expires: 365});
@@ -40,7 +56,7 @@ $("document").ready(() => {
                 window.WS.sendMsg(wsMsg)
             }
         }).fail(function(result) {
-            errorAlert(result.responseJSON.error);
+            window.errorAlert(result.responseJSON.error);
           });
     });
 
@@ -61,7 +77,7 @@ $("document").ready(() => {
         });
     };
 
-    function errorAlert(message) {
+    window.errorAlert = function errorAlert(message) {
         document.getElementById("errorMenu").innerHTML = "<p class=\"bg-danger dropdown-item text-white font-weight-bold\">"+message+"</p>";
         setTimeout(() => $( "#errorMenu" ).load(window.location.href + " #errorMenu" ), 3500);
     };

@@ -14,6 +14,8 @@
 
 /* Styles for corner spaces */
 .corner {
+    width: 100px;
+    height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -31,6 +33,8 @@
 
 /* Styles for property spaces */
 .property {
+    width: 80px;
+    height: 100px;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -54,6 +58,8 @@
 
 /* Styles for special spaces */
 .special {
+    width: 80px;
+    height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -72,6 +78,8 @@
 
 /* Styles for railroad spaces */
 .railroad {
+    width: 80px;
+    height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;
@@ -84,6 +92,8 @@
 
 /* Styles for utility spaces */
 .utility {
+    width: 80px;
+    height: 100px;
     display: flex;
     justify-content: center;
     align-items: center;

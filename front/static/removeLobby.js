@@ -5,7 +5,7 @@ $("document").ready(() => {
         $.get( "/api/v1/removeLobby", {
             lobbyID: lobbyToDelete,
         }, function() {
-            Cookies.set("lobbyID", "", { expires: 0});
+            Cookies.remove('lobbyID');
             $("#lobbyCreateBtn").prop( "disabled", false );
             $("#btnName").prop( "disabled", false ); // you cannot change name with active session
             $("#createdP").hide();
