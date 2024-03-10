@@ -24,4 +24,16 @@ $("document").ready(() => {
         console.log("checkActiveGame failed")
         window.location.href = "/"
     });
+
+    window.toggleActivePlate = function toggleActivePlate(id) {
+        let plateColor
+
+        if (id == 1) {
+            plateColor = "blue"
+        } else if (id == 2) {
+            plateColor = "green"
+        }
+
+        $("#player"+id+"-plate").toggleClass("grad-"+plateColor)
+    }
 });

@@ -106,7 +106,9 @@ func (lm *LobbyModule) AddPlayerToLobby(lobbyID, playerName, sessionID string) e
 	lobby.isStarted = true
 	lm.lMux.Unlock()
 
-	alert.Info("AddPlayerToLobby lm.lobbies", lm.lobbies)
+	// start game
+
+	alert.Info("AddPlayerToLobby lobby", lobby)
 	return nil
 }
 
