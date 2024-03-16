@@ -45,6 +45,7 @@ func (r *Router) initializeRoutes() {
 	r.engine.GET("/", r.showIndexPage)
 	r.engine.GET("/game", r.showGamePage)
 	r.engine.GET("/ws", r.HandleWebSocket)
+	r.engine.GET("/ws/game", r.HandleWSGame)
 
 	apiV1 := r.engine.Group("/api/v1")
 	apiV1.GET("/randomName", naming.GetRandName)

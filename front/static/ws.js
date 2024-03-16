@@ -56,6 +56,26 @@ class FrontWS{
         }
     }
 
+    connectGame(){
+        console.log("connectGame");
+        var params = "?lobbyID="+Cookies.get('lobbyID')+"&sessionID="+Cookies.get('sessionID')
+
+        var socket = new WebSocket("ws://localhost:8080/ws/game"+params);
+        this.mysocket = socket;
+
+        socket.onmessage = (e)=>{
+        //    this.showMessage(e.data, false);
+           this.acceptMsg(e.data)
+        }
+        
+        socket.onopen =  ()=> {
+           console.log("socket opened")
+        };  
+        socket.onclose = ()=> {
+           console.log("socket closed")
+        }
+    }
+
     disconnect(){
         console.log("disconnect");
         this.mysocket.close()

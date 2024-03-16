@@ -1,4 +1,7 @@
 $("document").ready(() => {
+    window.WS = new FrontWS()
+    window.WS.connectGame();
+
     var onLoadName = Cookies.get('name');
     if (onLoadName == undefined || onLoadName == "") {
         Cookies.set('name', "Хитрун", { expires: 365});

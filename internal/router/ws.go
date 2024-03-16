@@ -15,6 +15,43 @@ var upgrader = websocket.Upgrader{
 
 var allWsReaders []*wsReader
 
+// var (
+// 	gameConn = NewGameWS()
+// )
+
+// func NewGameWS() *GameWS {
+// 	return &GameWS{
+// 		conn: make(map[string]*wsGameLobby),
+// 	}
+// }
+
+// func (gw *GameWS) Find(lobbyID string) (*wsGameLobby, bool) {
+// 	gw.mux.RLock()
+// 	defer gw.mux.RUnlock()
+
+// 	l, found := gw.conn[lobbyID]
+
+// 	return l, found
+// }
+
+// func (gw *GameWS) Add(game *wsGameLobby) {
+// 	gw.mux.Lock()
+// 	gw.conn[game.lobbyID] = game
+// 	gw.mux.Unlock()
+// }
+
+// type GameWS struct {
+// 	conn map[string]*wsGameLobby // key - lobbyID
+// 	mux  sync.RWMutex
+// }
+
+// type wsGameLobby struct {
+// 	wsConn  *websocket.Conn
+// 	lobbyID string
+
+// 	sessions []string
+// }
+
 // wsReader struct
 type wsReader struct {
 	wsConn     *websocket.Conn
@@ -64,6 +101,38 @@ func (r *Router) HandleWebSocket(c *gin.Context) {
 
 	newReader.startListening()
 }
+
+// func (r *Router) HandleWSGame(c *gin.Context) {
+// 	lobbyID := c.Query("lobbyID")
+// 	sessionID := c.Query("sessionID")
+
+// 	defer func() {
+// 		err := recover()
+// 		if err != nil {
+// 			alert.Error(err)
+// 		}
+// 		c.Request.Body.Close()
+// 	}()
+
+// 	con, _ := upgrader.Upgrade(c.Writer, c.Request, nil)
+
+// 	lobby, exists := gameConn.Find(lobbyID)
+// 	if exists {
+// 		lobby.sessions = append(lobby.sessions, sessionID)
+
+// 		return
+// 	}
+
+// 	newLobbyWs := &wsGameLobby{
+// 		wsConn:  con,
+// 		lobbyID: lobbyID,
+
+// 		sessions: []string{sessionID},
+// 	}
+// 	gameConn.Add(newLobbyWs)
+
+// 	newReader.startListening()
+// }
 
 // func (i *wsReader) broadcast(str string) {
 // 	for _, g := range allWsReaders {
@@ -185,18 +254,3 @@ func (i *wsReader) startListening() {
 
 	}()
 }
-
-// func (r *Router) HandleWebSocket(c *gin.Context) {
-// 	// Upgrade HTTP connection to websocket connection
-// 	ws, err := websocket.Upgrader(c.Writer, c.Request, nil, 1024, 1024)
-// 	if err != nil {
-// 		http.Error(c.Writer, "Could not open websocket connection", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	// Register client
-// 	clients[ws] = true
-
-// 	// Listen for messages from client
-// 	go listenForMessages(ws)
-// }
