@@ -3,8 +3,8 @@ package router
 import (
 	"path/filepath"
 
-	"github.com/SaYaku64/monopoly/internal/lobby"
-	"github.com/SaYaku64/monopoly/internal/naming"
+	"github.com/SaYaku64/business-game/internal/lobby"
+	"github.com/SaYaku64/business-game/internal/naming"
 	"github.com/gin-contrib/static"
 	"github.com/gin-gonic/gin"
 )

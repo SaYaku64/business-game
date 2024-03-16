@@ -3,7 +3,7 @@ package game
 import (
 	"sync"
 
-	"github.com/SaYaku64/monopoly/internal/alert"
+	"github.com/SaYaku64/business-game/internal/alert"
 )
 
 type (

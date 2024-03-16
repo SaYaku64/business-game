@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SaYaku64/monopoly/internal/alert"
+	"github.com/SaYaku64/business-game/internal/alert"
 	"github.com/gin-gonic/gin"
 )
 

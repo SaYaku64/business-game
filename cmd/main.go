@@ -1,9 +1,9 @@
 package main
 
 import (
-	"github.com/SaYaku64/monopoly/internal/alert"
-	"github.com/SaYaku64/monopoly/internal/lobby"
-	"github.com/SaYaku64/monopoly/internal/router"
+	"github.com/SaYaku64/business-game/internal/alert"
+	"github.com/SaYaku64/business-game/internal/lobby"
+	"github.com/SaYaku64/business-game/internal/router"
 )
 
 func main() {

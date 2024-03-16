@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SaYaku64/monopoly/internal/alert"
+	"github.com/SaYaku64/business-game/internal/alert"
 )
 
 const (

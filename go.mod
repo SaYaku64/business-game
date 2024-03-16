@@ -1,4 +1,4 @@
-module github.com/SaYaku64/monopoly
+module github.com/SaYaku64/business-game
 
 go 1.21.4
 
