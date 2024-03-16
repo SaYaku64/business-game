@@ -11,14 +11,20 @@ var (
 	warningLog = lg.New(os.Stderr, "[WARNING] ", lg.Lshortfile)
 )
 
-func Info(v ...any) {
-	infoLog.Println(v...)
-}
+var (
+	Info    = infoLog
+	Error   = errorLog
+	Warning = warningLog
+)
 
-func Error(v ...any) {
-	errorLog.Println(v...)
-}
+// func Info(v ...any) {
+// 	infoLog.Println(v...)
+// }
 
-func Warning(v ...any) {
-	warningLog.Println(v...)
-}
+// func Error(v ...any) {
+// 	errorLog.Println(v...)
+// }
+
+// func Warning(v ...any) {
+// 	warningLog.Println(v...)
+// }

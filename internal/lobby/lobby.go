@@ -5,7 +5,7 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SaYaku64/business-game/internal/alert"
+	a "github.com/SaYaku64/business-game/internal/alert"
 )
 
 const (
@@ -108,7 +108,7 @@ func (lm *LobbyModule) AddPlayerToLobby(lobbyID, playerName, sessionID string) e
 
 	// start game
 
-	alert.Info("AddPlayerToLobby lobby", lobby)
+	a.Info.Println("AddPlayerToLobby lobby", lobby)
 	return nil
 }
 
@@ -185,7 +185,7 @@ func (l *lobby) formatTableResponse(sessionID string) string {
 		return ""
 	}
 
-	alert.Info("formatTableResponse", l.lobbyID, l.sessionID1, sessionID)
+	a.Info.Printf("formatTableResponse. l.lobbyID: %s, l.sessionID1: %s, sessionID: %s", l.lobbyID, l.sessionID1, sessionID)
 
 	fastGame := "<i>" + dashSvg + "</i>"
 	if l.gameSettings.FastGame {

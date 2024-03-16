@@ -1,7 +1,7 @@
 package main
 
 import (
-	"github.com/SaYaku64/business-game/internal/alert"
+	a "github.com/SaYaku64/business-game/internal/alert"
 	"github.com/SaYaku64/business-game/internal/lobby"
 	"github.com/SaYaku64/business-game/internal/router"
 )
@@ -13,6 +13,6 @@ func main() {
 	r.Load()
 
 	if err := r.RunRouter(); err != nil {
-		alert.Warning(err)
+		a.Warning.Println(err)
 	}
 }

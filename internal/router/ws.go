@@ -3,7 +3,7 @@ package router
 import (
 	"encoding/json"
 
-	"github.com/SaYaku64/business-game/internal/alert"
+	a "github.com/SaYaku64/business-game/internal/alert"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -78,7 +78,7 @@ func deleteReader(lobbyID string) {
 }
 
 func (r *Router) HandleWebSocket(c *gin.Context) {
-	alert.Info("socket request")
+	a.Info.Println("socket request")
 	if allWsReaders == nil {
 		allWsReaders = make([]*wsReader, 0)
 	}
@@ -86,7 +86,7 @@ func (r *Router) HandleWebSocket(c *gin.Context) {
 	defer func() {
 		err := recover()
 		if err != nil {
-			alert.Error(err)
+			a.Error.Println(err)
 		}
 		c.Request.Body.Close()
 	}()
@@ -109,7 +109,7 @@ func (r *Router) HandleWebSocket(c *gin.Context) {
 // 	defer func() {
 // 		err := recover()
 // 		if err != nil {
-// 			alert.Error(err)
+// 			a.Error.Println(err)
 // 		}
 // 		c.Request.Body.Close()
 // 	}()
@@ -175,22 +175,22 @@ func (i *wsReader) read() {
 	msg := ReaderMsg{}
 
 	if err := json.Unmarshal(byteMsg, &msg); err != nil {
-		alert.Error("Unmarshal error", err, string(byteMsg))
+		a.Error.Println("Unmarshal error", err, string(byteMsg))
 		panic(err)
 	}
 
-	alert.Info("msg", msg)
+	a.Info.Println("msg", msg)
 	if msg.Action == actionCreate {
 		i.lobbyID = msg.LobbyID
 		i.sessionID1 = msg.SessionID
-		alert.Info("waiting lobby for", msg.LobbyID)
+		a.Info.Println("waiting lobby for", msg.LobbyID)
 
 		return
 	}
 
 	if msg.Action == actionConnect {
 		i.sessionID2 = msg.SessionID
-		alert.Info("connecting", msg.SessionID, msg.LobbyID)
+		a.Info.Println("connecting", msg.SessionID, msg.LobbyID)
 
 		i.writeBoth(msg.LobbyID, msg.SessionID)
 
@@ -198,7 +198,7 @@ func (i *wsReader) read() {
 	}
 
 	if msg.Action == actionDelete {
-		alert.Info("deleting", msg.LobbyID)
+		a.Info.Println("deleting", msg.LobbyID)
 
 		deleteReader(msg.LobbyID)
 	}
@@ -243,9 +243,9 @@ func (i *wsReader) startListening() {
 		defer func() {
 			err := recover()
 			if err != nil {
-				alert.Error(err)
+				a.Error.Println(err)
 			}
-			alert.Info("listening finished ", i.sessionID1)
+			a.Info.Println("listening finished ", i.sessionID1)
 		}()
 
 		for {

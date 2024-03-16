@@ -4,7 +4,7 @@ import (
 	"net/http"
 	"strconv"
 
-	"github.com/SaYaku64/business-game/internal/alert"
+	a "github.com/SaYaku64/business-game/internal/alert"
 	"github.com/gin-gonic/gin"
 )
 
@@ -39,7 +39,7 @@ func (r *Router) GetSessionID(c *gin.Context) {
 func (r *Router) GetLobbiesTable(c *gin.Context) {
 	sessionID := c.Query("sessionID")
 
-	alert.Info("GetLobbiesTable", sessionID)
+	a.Info.Println("GetLobbiesTable sessionID:", sessionID)
 
 	c.JSON(http.StatusOK, gin.H{"lobbiesTable": r.lm.GetLobbiesTableResponse(sessionID)})
 }

@@ -3,7 +3,7 @@ package game
 import (
 	"sync"
 
-	"github.com/SaYaku64/business-game/internal/alert"
+	a "github.com/SaYaku64/business-game/internal/alert"
 )
 
 type (
@@ -110,7 +110,7 @@ func (g *Game) CalculateField(plr *player, diceSum int) (canBuy bool, payToOther
 	if isFieldProperty(plr.fieldIndex) { // can be bought
 		prop, found := g.getPropertyByIndex(plr.fieldIndex)
 		if !found {
-			alert.Error("game.go -> Roll -> getPropertyByIndex: property not found; index = ", plr.fieldIndex)
+			a.Error.Println("game.go -> Roll -> getPropertyByIndex: property not found; index = ", plr.fieldIndex)
 			return
 		}
 

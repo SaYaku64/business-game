@@ -1,9 +1,7 @@
 package router
 
 import (
-	"fmt"
-
-	"github.com/SaYaku64/business-game/internal/alert"
+	a "github.com/SaYaku64/business-game/internal/alert"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
@@ -18,7 +16,7 @@ var lobbies = make(map[string]*Lobby)
 func (r *Router) HandleWSGame(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
 	if err != nil {
-		alert.Error("Error upgrading to WebSocket:", err)
+		a.Error.Println("Error upgrading to WebSocket:", err)
 		return
 	}
 	defer conn.Close()
@@ -27,18 +25,18 @@ func (r *Router) HandleWSGame(c *gin.Context) {
 	sessionID := c.Query("sessionID")
 
 	if lobby, ok := lobbies[lobbyID]; ok {
-		alert.Info("lobbies[lobbyID] ok")
+		a.Info.Println("lobbies[lobbyID] ok")
 		lobby.Players = append(lobby.Players, sessionID)
 		lobbies[lobbyID] = lobby
-		alert.Info("lobbies[lobbyID] ok, lobby", *lobby)
+		a.Info.Println("lobbies[lobbyID] ok, lobby", *lobby)
 	} else {
-		alert.Info("lobbies[lobbyID] !ok")
+		a.Info.Println("lobbies[lobbyID] !ok")
 		lobby := &Lobby{
 			ID:      lobbyID,
 			Players: []string{sessionID},
 		}
 		lobbies[lobbyID] = lobby
-		alert.Info("lobbies[lobbyID] ok, lobby", *lobby)
+		a.Info.Println("lobbies[lobbyID] ok, lobby", *lobby)
 	}
 
 	readGameMsgs(conn, sessionID, lobbyID)
@@ -53,14 +51,11 @@ func readGameMsgs(
 		if err != nil {
 			deletePlayerFromLobby(sessionID, lobbyID)
 
-			str := fmt.Sprintf("conn.ReadMessage error. lobbyID: %s; sessionID: %s; err: %s", lobbyID, sessionID, err.Error())
-			alert.Error(str)
+			a.Error.Printf("conn.ReadMessage error. lobbyID: %s; sessionID: %s; err: %s\n", lobbyID, sessionID, err.Error())
 			break
 		}
 
-		str := fmt.Sprintf("readGameMsgs. lobbyID: %s; sessionID: %s; byteMsg: %s", lobbyID, sessionID, string(byteMsg))
-
-		alert.Info(str)
+		a.Info.Printf("readGameMsgs. lobbyID: %s; sessionID: %s; byteMsg: %s\n", lobbyID, sessionID, string(byteMsg))
 	}
 }
 
