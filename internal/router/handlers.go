@@ -74,9 +74,9 @@ func (r *Router) CheckActiveGame(c *gin.Context) {
 	playerName := c.PostForm("playerName")
 	sessionID := c.PostForm("sessionID")
 
-	active, plrTurn := r.gm.CheckActiveGame(lobbyID, playerName, sessionID)
+	active, plrTurn, current := r.gm.CheckActiveGame(lobbyID, playerName, sessionID)
 	if active {
-		c.JSON(http.StatusOK, gin.H{"turn": plrTurn})
+		c.JSON(http.StatusOK, gin.H{"turn": plrTurn, "current": current})
 	} else {
 
 		c.Status(http.StatusTeapot)

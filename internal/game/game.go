@@ -80,7 +80,7 @@ func (g *GameModule) SetGame(lobby lp.Lobby) {
 	g.Unlock()
 }
 
-func (g *GameModule) CheckActiveGame(lobbyID, playerName, sessionID string) (active bool, plrTurn bool) {
+func (g *GameModule) CheckActiveGame(lobbyID, playerName, sessionID string) (active, plrTurn bool, current int) {
 	game, found := g.GetGame(lobbyID)
 	if !found {
 		return
@@ -93,6 +93,8 @@ func (g *GameModule) CheckActiveGame(lobbyID, playerName, sessionID string) (act
 		}
 	}
 
+	current = game.CurrentPlayer
+
 	return
 }
 
@@ -100,8 +102,11 @@ func (g *GameState) GetCurrentPlayer() (plr *Player) {
 	return g.Players[g.CurrentPlayer]
 }
 
-func (g *GameState) NextPlayerTurn() {
+func (g *GameState) NextPlayerTurn() (indexBefore int) {
+	indexBefore = g.CurrentPlayer
 	g.CurrentPlayer = (g.CurrentPlayer + 1) % len(g.Players)
+
+	return
 }
 
 func (g *GameState) CalculateField(plr *Player, diceSum int) (canBuy bool, payToOther bool, moneyFlow int, recalculateField bool, chanceCard string) {
@@ -377,7 +382,7 @@ func (g *GameState) Buy(plr *Player) (answer gin.H, ok bool) {
 	ok = true
 
 	msg := fmt.Sprintf("%s придбав %s.", plr.Name, field.Name)
-	answer = gin.H{"msg": msg}
+	answer = gin.H{"msg": msg, "index": plr.Position, "plr": plr.Index}
 
 	return
 }

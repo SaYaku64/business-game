@@ -30,30 +30,27 @@ $("document").ready(() => {
         if (data.turn) {
             $('#turnPlate').show();
         }
+        window.toggleActivePlate(data.current)
     }).fail(function () {
         console.log("checkActiveGame failed")
         window.location.href = "/"
     });
 
-    window.toggleActivePlate = function toggleActivePlate(id) {
-        let plateColor
-
+    window.getColorById = function getColorById(id) {
         switch (id) {
             case 0:
-                plateColor = "blue"
-                break;
+                return "blue"
             case 1:
-                plateColor = "green"
-                break;
+                return "green"
             case 2:
-                plateColor = "yellow"
-                break;
+                return "yellow"
             case 3:
-                plateColor = "red"
-                break;
+                return "red"
         }
+    }
 
-        $("#player" + id + "-plate").toggleClass("grad-" + plateColor)
+    window.toggleActivePlate = function toggleActivePlate(id) {
+        $("#player" + id + "-plate").toggleClass("grad-" + window.getColorById(id))
     }
 
     window.turn = function turn() {

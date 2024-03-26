@@ -1,6 +1,6 @@
-class FrontWS{
-    constructor(){
-        this.mysocket =  null;
+class FrontWS {
+    constructor() {
+        this.mysocket = null;
         // this.vMsgContainer = document.getElementById("msgcontainer");
         // this.vMsgIpt = document.getElementById("ipt");
     }
@@ -19,84 +19,93 @@ class FrontWS{
     //     this.mysocket.send(txt);
     //     this.vMsgIpt.value = ""
     // }
- 
+
     // keypress(e){
     //     if (e.keyCode == 13) {
     //         this.send();
     //     }
     // }
 
-    sendMsg(msg){
+    sendMsg(msg) {
         console.log("sendMsg", msg);
         this.mysocket.send(msg);
     }
 
-    acceptMsg(msg){
+    acceptMsg(msg) {
         console.log("acceptMsg", msg)
         if (msg == "redirect") {
             window.redirectToLobby();
         }
     }
 
-    acceptMsgGame(msg){
-        console.log("acceptMsgGame", msg)
+    acceptMsgGame(data) {
+        let obj = JSON.parse(data)
 
-        if (msg.match("^{")) {
-            let jObj = JSON.parse(msg)
-            if (jObj.struct == true) {
-                // $(".overflow-auto").append("<p class='small'>"+jObj.msg+"</p>");
-                $("#chatBottom").prepend("<p class='small'>"+jObj.msg+"</p>");
-                return
-            }
+        switch (obj.type) {
+            case "chat msg":
+                $("#chatBottom").prepend("<p class='small'>" + obj.msg + "</p>");
+                break;
+            case "take turn":
+                if (obj.index != null) {
+                    window.toggleActivePlate(obj.index)
+                    break;
+                }
+
+                if (obj.turn) {
+                    $('#turnPlate').show();
+                }
+
+                window.toggleActivePlate(obj.indexBefore)
+                window.toggleActivePlate(obj.indexAfter)
+                break;
+            case "update field":
+                $("#fieldID-"+obj.index).addClass("grad-" + window.getColorById(obj.plr));
+                $("#chatBottom").prepend("<p class='small'>" + obj.msg + "</p>");
+                break;
         }
-        
-        if (msg == "take turn") {
-            $('#turnPlate').show();
 
-            return
-        }
-
+        console.log(obj)
     }
 
-    connect(){
+    connect() {
         console.log("connect");
         var socket = new WebSocket("ws://localhost:8080/ws");
         this.mysocket = socket;
 
-        socket.onmessage = (e)=>{
-        //    this.showMessage(e.data, false);
-           this.acceptMsg(e.data)
+        socket.onmessage = (e) => {
+            //    this.showMessage(e.data, false);
+            this.acceptMsg(e.data)
         }
-        
-        socket.onopen =  ()=> {
-           console.log("socket opened")
-        };  
-        socket.onclose = ()=> {
-           console.log("socket closed")
+
+        socket.onopen = () => {
+            console.log("socket opened")
+        };
+        socket.onclose = () => {
+            console.log("socket closed")
         }
     }
 
-    connectGame(){
+    connectGame() {
         console.log("connectGame");
-        var params = "?lobbyID="+Cookies.get('lobbyID')+"&sessionID="+Cookies.get('sessionID')
+        var params = "?lobbyID=" + Cookies.get('lobbyID') + "&sessionID=" + Cookies.get('sessionID')
 
-        var socket = new WebSocket("ws://localhost:8080/ws/game"+params);
+        var socket = new WebSocket("ws://localhost:8080/ws/game" + params);
         this.mysocket = socket;
 
-        socket.onmessage = (e)=>{
-        //    this.showMessage(e.data, false);
-           this.acceptMsgGame(e.data)
+        socket.onmessage = (e) => {
+            //    this.showMessage(e.data, false);
+            this.acceptMsgGame(e.data)
         }
-        
-        socket.onopen =  ()=> {
-           console.log("socket opened")
-        };  
-        socket.onclose = ()=> {
-           console.log("socket closed")
+
+        socket.onopen = () => {
+            console.log("socket opened")
+        };
+        socket.onclose = () => {
+            console.log("socket closed")
         }
     }
 
-    disconnect(){
+    disconnect() {
         console.log("disconnect");
         this.mysocket.close()
     }

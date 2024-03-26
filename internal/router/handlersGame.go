@@ -47,15 +47,17 @@ func (r *Router) Buy(c *gin.Context) {
 	}
 
 	answer, ok := game.Buy(plr)
-	status := http.StatusBadRequest
-	if ok {
-		status = http.StatusOK
-		game.NextPlayerTurn()
-		r.NextPlayerTurn(lobbyID, game.GetCurrentPlayer().SessionID)
-		r.SendMsgChat(lobbyID, answer)
+	if !ok {
+		c.JSON(http.StatusBadRequest, answer)
+		return
 	}
 
-	c.JSON(status, answer)
+	indexBefore := game.NextPlayerTurn()
+	r.NextPlayerTurn(lobbyID, game.GetCurrentPlayer().SessionID, indexBefore, game.CurrentPlayer)
+	// r.SendMsgChat(lobbyID, answer)
+	r.SendUpdateField(lobbyID, answer)
+
+	c.JSON(http.StatusOK, answer)
 }
 
 func (r *Router) PayRent(c *gin.Context) {
@@ -80,8 +82,8 @@ func (r *Router) PayRent(c *gin.Context) {
 		status = http.StatusBadRequest
 	}
 
-	game.NextPlayerTurn()
-	r.NextPlayerTurn(lobbyID, game.GetCurrentPlayer().SessionID)
+	iB := game.NextPlayerTurn()
+	r.NextPlayerTurn(lobbyID, game.GetCurrentPlayer().SessionID, iB, game.CurrentPlayer)
 	r.SendMsgChat(lobbyID, answer)
 
 	c.JSON(status, answer)

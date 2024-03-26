@@ -14,7 +14,7 @@ type GameLobby struct {
 	conns   []*websocket.Conn
 }
 
-func (r *Router) NextPlayerTurn(lobbyID, sessionID string) {
+func (r *Router) NextPlayerTurn(lobbyID, sessionID string, indexBefore, indexAfter int) {
 	r.gMux.RLock()
 	gLobby, found := r.games[lobbyID]
 	r.gMux.RUnlock()
@@ -23,9 +23,14 @@ func (r *Router) NextPlayerTurn(lobbyID, sessionID string) {
 	}
 
 	for i := range gLobby.conns {
-		if gLobby.Players[i] == sessionID {
-			gLobby.conns[i].WriteMessage(websocket.TextMessage, []byte("take turn"))
+		obj := gin.H{
+			"indexBefore": indexBefore,
+			"indexAfter":  indexAfter,
 		}
+		if gLobby.Players[i] == sessionID {
+			obj["turn"] = true
+		}
+		gLobby.conns[i].WriteMessage(websocket.TextMessage, marshalWithType("take turn", obj))
 	}
 }
 
@@ -37,14 +42,29 @@ func (r *Router) SendMsgChat(lobbyID string, data gin.H) {
 		return
 	}
 
-	data["struct"] = true
+	for i := range gLobby.conns {
+		gLobby.conns[i].WriteMessage(websocket.TextMessage, marshalWithType("chat msg", data))
+	}
+}
 
-	bMsg, _ := json.Marshal(data)
+func (r *Router) SendUpdateField(lobbyID string, data gin.H) {
+	r.gMux.RLock()
+	gLobby, found := r.games[lobbyID]
+	r.gMux.RUnlock()
+	if !found {
+		return
+	}
 
 	for i := range gLobby.conns {
-		gLobby.conns[i].WriteMessage(websocket.TextMessage, bMsg)
-
+		gLobby.conns[i].WriteMessage(websocket.TextMessage, marshalWithType("update field", data))
 	}
+}
+
+func marshalWithType(tpe string, data gin.H) (bytes []byte) {
+	data["type"] = tpe
+	bytes, _ = json.Marshal(data)
+
+	return
 }
 
 func (r *Router) HandleWSGame(c *gin.Context) {
