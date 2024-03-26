@@ -30,17 +30,20 @@ const (
 
 type (
 	LobbyModule struct {
-		lobbies map[string]*lobby // key - lobbyID
+		lobbies map[string]*Lobby // key - LobbyID
 		lMux    sync.RWMutex
 	}
 
-	lobby struct {
-		lobbyID string
+	Lobby struct {
+		LobbyID string
 
-		sessionID1  string
-		sessionID2  string
-		playerName1 string
-		playerName2 string
+		SessionIDs  []string
+		PlayerNames []string
+
+		// sessionID1  string // deprecated
+		// sessionID2  string // deprecated
+		// playerName1 string // deprecated
+		// playerName2 string // deprecated
 
 		gameSettings Settings
 
@@ -62,7 +65,7 @@ type (
 
 func CreateLobbyModule() *LobbyModule {
 	return &LobbyModule{
-		lobbies: map[string]*lobby{},
+		lobbies: map[string]*Lobby{},
 	}
 }
 
@@ -73,14 +76,18 @@ func (lm *LobbyModule) CreateLobby(
 	fastGame bool,
 	experimental bool,
 ) (
-	lobbyID string,
+	LobbyID string,
 ) {
-	lobbyID = generateLobbyID()
+	LobbyID = generateLobbyID()
 
-	gameLobby := &lobby{
-		lobbyID:     lobbyID,
-		sessionID1:  sessionID,
-		playerName1: playerName,
+	gameLobby := &Lobby{
+		LobbyID: LobbyID,
+
+		SessionIDs:  []string{sessionID},
+		PlayerNames: []string{playerName},
+
+		// sessionID1:  sessionID,
+		// playerName1: playerName,
 
 		gameSettings: Settings{
 			FieldType:    fieldType,
@@ -94,43 +101,33 @@ func (lm *LobbyModule) CreateLobby(
 	return
 }
 
-func (lm *LobbyModule) AddPlayerToLobby(lobbyID, playerName, sessionID string) error {
-	lobby, found := lm.getLobbyByLobbyID(lobbyID)
+func (lm *LobbyModule) AddPlayerToLobby(LobbyID, playerName, sessionID string) (lb *Lobby, err error) {
+	lobby, found := lm.getLobbyByLobbyID(LobbyID)
 	if !found {
-		return fmt.Errorf("lobby not found")
+		err = fmt.Errorf("lobby not found")
+
+		return
 	}
 
 	lm.lMux.Lock()
-	lobby.playerName2 = playerName
-	lobby.sessionID2 = sessionID
+
+	lobby.PlayerNames = append(lobby.PlayerNames, playerName)
+	lobby.SessionIDs = append(lobby.SessionIDs, sessionID)
+
+	// lobby.playerName2 = playerName
+	// lobby.sessionID2 = sessionID
 	lobby.isStarted = true
 	lm.lMux.Unlock()
 
-	// start game
-
 	a.Info.Println("AddPlayerToLobby lobby", lobby)
-	return nil
+
+	lb = lobby
+
+	return
 }
 
-func (lm *LobbyModule) CheckActiveGame(lobbyID, playerName, sessionID string) bool {
-	lobby, found := lm.getLobbyByLobbyID(lobbyID)
-	if !found {
-		return false
-	}
-
-	if playerName != lobby.playerName1 && playerName != lobby.playerName2 {
-		return false
-	}
-
-	if sessionID != lobby.sessionID1 && sessionID != lobby.sessionID2 {
-		return false
-	}
-
-	return lobby.isStarted
-}
-
-func (lm *LobbyModule) IsLobbyExists(lobbyID string) (exists bool) {
-	_, exists = lm.getLobbyByLobbyID(lobbyID)
+func (lm *LobbyModule) IsLobbyExists(LobbyID string) (exists bool) {
+	_, exists = lm.getLobbyByLobbyID(LobbyID)
 
 	return
 }
@@ -147,8 +144,8 @@ func (lm *LobbyModule) GetLobbiesTableResponse(sessionID string) string {
 	return resp
 }
 
-func (lm *LobbyModule) RemoveLobby(lobbyID string) {
-	lm.removeFromMap(lobbyID)
+func (lm *LobbyModule) RemoveLobby(LobbyID string) {
+	lm.removeFromMap(LobbyID)
 }
 
 func generateLobbyID() string {
@@ -156,36 +153,36 @@ func generateLobbyID() string {
 	return long[len(long)-5:]
 }
 
-func (lm *LobbyModule) addToMap(gameLobby *lobby) {
+func (lm *LobbyModule) addToMap(gameLobby *Lobby) {
 	lm.lMux.Lock()
-	lm.lobbies[gameLobby.lobbyID] = gameLobby
+	lm.lobbies[gameLobby.LobbyID] = gameLobby
 	lm.lMux.Unlock()
 }
 
-func (lm *LobbyModule) removeFromMap(lobbyID string) {
+func (lm *LobbyModule) removeFromMap(LobbyID string) {
 	lm.lMux.Lock()
-	delete(lm.lobbies, lobbyID)
+	delete(lm.lobbies, LobbyID)
 	lm.lMux.Unlock()
 }
 
-func (lm *LobbyModule) getLobbyByLobbyID(lobbyID string) (gameLobby *lobby, ok bool) {
+func (lm *LobbyModule) getLobbyByLobbyID(LobbyID string) (gameLobby *Lobby, ok bool) {
 	lm.lMux.RLock()
-	gameLobby, ok = lm.lobbies[lobbyID]
+	gameLobby, ok = lm.lobbies[LobbyID]
 	lm.lMux.RUnlock()
 
 	if !ok {
-		gameLobby = &lobby{}
+		gameLobby = &Lobby{}
 	}
 
 	return
 }
 
-func (l *lobby) formatTableResponse(sessionID string) string {
+func (l *Lobby) formatTableResponse(sessionID string) string {
 	if l.isStarted {
 		return ""
 	}
 
-	a.Info.Printf("formatTableResponse. l.lobbyID: %s, l.sessionID1: %s, sessionID: %s", l.lobbyID, l.sessionID1, sessionID)
+	a.Info.Printf("formatTableResponse. l.LobbyID: %s, l.SessionIDs[0]: %s, sessionID: %s", l.LobbyID, l.SessionIDs[0], sessionID)
 
 	fastGame := "<i>" + dashSvg + "</i>"
 	if l.gameSettings.FastGame {
@@ -197,15 +194,15 @@ func (l *lobby) formatTableResponse(sessionID string) string {
 		experimental = "<i>" + checkSvg + "</i>"
 	}
 
-	action := "<i onclick='window.connectLobby(\"" + l.lobbyID + "\");' style=\"cursor: pointer;\">" + connectSvg + "</i>"
+	action := "<i onclick='window.connectLobby(\"" + l.LobbyID + "\");' style=\"cursor: pointer;\">" + connectSvg + "</i>"
 	selection := ""
-	if l.sessionID1 == sessionID {
+	if l.SessionIDs[0] == sessionID {
 		action = "<i onclick='window.removeLobby();' style=\"cursor: pointer;\">" + deleteSvg + "</i>"
 		selection = "class=\"table-info\""
 	}
 
 	result := `<tr ` + selection + `>
-              <td>` + l.playerName1 + `</td>
+              <td>` + l.PlayerNames[0] + `</td>
               <td>` + l.gameSettings.FieldType + `</td>
               <td>` + fastGame + `</td>
               <td>` + experimental + `</td>

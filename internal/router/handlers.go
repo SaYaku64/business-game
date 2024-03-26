@@ -57,9 +57,13 @@ func (r *Router) ConnectLobby(c *gin.Context) {
 	playerName := c.PostForm("playerName")
 	sessionID := c.PostForm("sessionID")
 
-	err := r.lm.AddPlayerToLobby(lobbyID, playerName, sessionID)
+	lobby, err := r.lm.AddPlayerToLobby(lobbyID, playerName, sessionID)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+	}
+
+	if lobby != nil {
+		r.gm.SetGame(*lobby)
 	}
 
 	c.Status(http.StatusOK)
@@ -70,11 +74,12 @@ func (r *Router) CheckActiveGame(c *gin.Context) {
 	playerName := c.PostForm("playerName")
 	sessionID := c.PostForm("sessionID")
 
-	active := r.lm.CheckActiveGame(lobbyID, playerName, sessionID)
+	active, plrTurn := r.gm.CheckActiveGame(lobbyID, playerName, sessionID)
 	if active {
-		c.Status(http.StatusOK)
+		c.JSON(http.StatusOK, gin.H{"turn": plrTurn})
 	} else {
-		c.Status(http.StatusBadRequest)
+
+		c.Status(http.StatusTeapot)
 	}
 }
 
@@ -85,6 +90,6 @@ func (r *Router) IsLobbyExists(c *gin.Context) {
 	if active {
 		c.Status(http.StatusOK)
 	} else {
-		c.Status(http.StatusBadRequest)
+		c.Status(http.StatusTeapot)
 	}
 }

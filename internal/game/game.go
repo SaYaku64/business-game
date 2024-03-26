@@ -1,57 +1,48 @@
 package game
 
 import (
+	"fmt"
+	"math/rand"
 	"sync"
 
 	a "github.com/SaYaku64/business-game/internal/alert"
+	lp "github.com/SaYaku64/business-game/internal/lobby"
+	"github.com/gin-gonic/gin"
 )
 
 type (
 	GameModule struct {
-		Games map[string]*Game // key - lobbyID
-		gMux  sync.RWMutex
+		Games map[string]*GameState // key - lobbyID
+		sync.RWMutex
 	}
 
-	Game struct {
-		lobbyID string
+	GameState struct {
+		LobbyID string
 
-		// freeProperties map[int]property
-		// fpMux          sync.RWMutex
+		Board map[int]*property // key - 0-39
+		sync.RWMutex
 
-		allProperties map[int]*property
-		apMux         sync.RWMutex
+		Players       []*Player // unused now, todo
+		CurrentPlayer int       // index in Players slice
 
-		player1 *player
-		player2 *player
-	}
-
-	player struct {
-		sessionID  string
-		playerName string
-
-		fieldIndex int // place, where he is now
-
-		jailGuard int // card from chance
-		jailed    bool
-		jailDay   int // if 3 = needs to pay 50$
-
-		playerID int
-		money    int
-		// properties map[int]*property
-		// prMux      sync.RWMutex
-
-		doubleCount int // if 3 = go to jail
+		player1 *Player // deprecated
+		player2 *Player // deprecated
 	}
 
 	property struct {
-		ownerID int // 0 - none; 1 - player1; 2 - player2
+		Index     int    // 0-39 (field)
+		Buyable   bool   // if it can be bought
+		Owner     string // SessionID of player which bought it
+		OwnerName string // name of  player which bought it
 
-		price int   // price of free property
-		rent  []int // price of rent: 0 - clear rent, 1 - 1 star ... 5 - hotel
-
-		index         int // 0-39 (field)
+		StreetIndex   int // 0 - brown ... 7 - blue
 		uncommonIndex int // 0 - street, 1 - railway, 2 - utility
-		streetIndex   int // 0 - brown ... 7 - blue
+
+		Name  string // name to display
+		Price int    // price of free property
+		Rent  []int  // price of rent: 0 - clear rent, 1 - 1 star ... 5 - hotel
+
+		ownerID int // 0 - none; 1 - player1; 2 - player2
 
 		isWholeStreetBought bool // shows if whole street bought (x2 to rent without stars)
 		stars               int  // houses and hotels on each property
@@ -61,56 +52,63 @@ type (
 	}
 )
 
-func (plr *player) checkDoubleToJail() bool {
-	return plr.doubleCount >= 3
-}
-
-func (plr *player) jail() {
-	plr.fieldIndex = 10
-	plr.jailed = true
-	plr.jailDay = 0
-}
-
-func (plr *player) unJail() {
-	plr.doubleCount = 0
-	plr.jailDay = 0
-	plr.jailed = false
-}
-
-func (plr *player) processCornerJail() {
-	if plr.fieldIndex == 30 {
-		plr.jail()
+func NewGameModule() *GameModule {
+	return &GameModule{
+		Games: make(map[string]*GameState),
 	}
 }
 
-func (plr *player) checkJailDice(diceSum int, double bool) (free, needToGo bool) {
-	plr.jailDay++
+func (g *GameModule) GetGame(lobbyID string) (game *GameState, found bool) {
+	g.RLock()
+	defer g.RUnlock()
 
-	if double {
-		plr.unJail()
+	game, found = g.Games[lobbyID]
 
-		return true, true
+	return
+}
+
+func (g *GameModule) SetGame(lobby lp.Lobby) {
+	game := &GameState{
+		LobbyID:       lobby.LobbyID,
+		CurrentPlayer: rand.Intn(len(lobby.SessionIDs)),
+		Players:       initPlayersFromLobby(lobby),
+		Board:         initBoard(),
 	}
 
-	if plr.jailDay < 3 {
+	g.Lock()
+	g.Games[game.LobbyID] = game
+	g.Unlock()
+}
+
+func (g *GameModule) CheckActiveGame(lobbyID, playerName, sessionID string) (active bool, plrTurn bool) {
+	game, found := g.GetGame(lobbyID)
+	if !found {
 		return
 	}
 
-	if plr.jailGuard > 0 {
-		plr.jailGuard--
-		plr.unJail()
-
-		return true, true
+	for i, plr := range game.Players {
+		if plr.SessionID == sessionID && plr.Name == playerName {
+			active = true
+			plrTurn = game.CurrentPlayer == i
+		}
 	}
 
-	return false, true
+	return
 }
 
-func (g *Game) CalculateField(plr *player, diceSum int) (canBuy bool, payToOther bool, moneyFlow int, recalculateField bool, chanceCard string) {
-	if isFieldProperty(plr.fieldIndex) { // can be bought
-		prop, found := g.getPropertyByIndex(plr.fieldIndex)
+func (g *GameState) GetCurrentPlayer() (plr *Player) {
+	return g.Players[g.CurrentPlayer]
+}
+
+func (g *GameState) NextPlayerTurn() {
+	g.CurrentPlayer = (g.CurrentPlayer + 1) % len(g.Players)
+}
+
+func (g *GameState) CalculateField(plr *Player, diceSum int) (canBuy bool, payToOther bool, moneyFlow int, recalculateField bool, chanceCard string) {
+	if isFieldProperty(plr.Position) { // can be bought
+		prop, found := g.getPropertyByIndex(plr.Position)
 		if !found {
-			a.Error.Println("game.go -> Roll -> getPropertyByIndex: property not found; index = ", plr.fieldIndex)
+			a.Error.Println("game.go -> Roll -> getPropertyByIndex: property not found; index = ", plr.Position)
 			return
 		}
 
@@ -120,7 +118,7 @@ func (g *Game) CalculateField(plr *player, diceSum int) (canBuy bool, payToOther
 			return
 		}
 
-		if prop.belongsToPlayer(plr.playerID) {
+		if prop.belongsToPlayer(plr.Index) {
 			return
 		}
 
@@ -129,7 +127,7 @@ func (g *Game) CalculateField(plr *player, diceSum int) (canBuy bool, payToOther
 		}
 
 		if prop.isUncommon() {
-			moneyFlow -= g.processUncommon(prop, plr.playerID, diceSum)
+			moneyFlow -= g.processUncommon(prop, plr.Index, diceSum)
 			payToOther = true
 
 			return
@@ -141,19 +139,19 @@ func (g *Game) CalculateField(plr *player, diceSum int) (canBuy bool, payToOther
 		return
 	}
 
-	if isTax, taxAmount := isFieldTax(plr.fieldIndex); isTax {
+	if isTax, taxAmount := isFieldTax(plr.Position); isTax {
 		moneyFlow -= taxAmount
 
 		return
 	}
 
-	if isFieldCorner(plr.fieldIndex) {
+	if isFieldCorner(plr.Position) {
 		plr.processCornerJail()
 
 		return
 	}
 
-	if isFieldChance(plr.fieldIndex) {
+	if isFieldChance(plr.Position) {
 		chanceText, amount, calculateNewField, moneyToPlayer := g.processChance(plr)
 
 		moneyFlow = amount
@@ -183,95 +181,235 @@ type RollResult struct {
 	MoneyFlow int // amount of money to pay
 }
 
-func (g *Game) RollAction(plr *player) (result *RollResult) {
-	diceSum, double := sumDices()
+const (
+	RollAction_Buy = iota + 1
+	RollAction_PayRent
+)
 
-	var wasInJail bool
+type RollActionResult struct {
+	FirstDice  int `json:"firstDice"`
+	SecondDice int `json:"secondDice"`
+	Status     int `json:"status"`
+}
 
-	if plr.jailed {
-		wasInJail = true
+func (g *GameState) RollAction(plr *Player) (result RollActionResult) {
+	first, second := genDices()
+	result.FirstDice = first
+	result.SecondDice = second
 
-		free, needToGo := plr.checkJailDice(diceSum, double)
+	diceSum, _ /*double*/ := sumDices(first, second)
 
-		if !free {
-			if needToGo {
-				result = &RollResult{
-					ContinueAction: true,
-					DiceSum:        diceSum,
-					JailPay50:      true,
-				}
+	// plr.CheckJail(double)
 
-				return // pay 50$
-			}
+	// var wasInJail bool
 
-			result = &RollResult{
-				Empty: true,
-			}
+	// if plr.Locked {
+	// 	wasInJail = true
 
-			return // sits until next round
+	// 	free, needToGo := plr.checkJailDice(diceSum, double)
+
+	// 	if !free {
+	// 		if needToGo {
+	// 			result = &RollResult{
+	// 				ContinueAction: true,
+	// 				DiceSum:        diceSum,
+	// 				JailPay50:      true,
+	// 			}
+
+	// 			return // pay 50$
+	// 		}
+
+	// 		result = &RollResult{
+	// 			Empty: true,
+	// 		}
+
+	// 		return // sits until next round
+	// 	}
+	// }
+
+	// if double && !wasInJail {
+	// 	plr.DoubleCount++
+	// 	if plr.checkDoubleToJail() {
+	// 		plr.jail()
+
+	// 		result = &RollResult{
+	// 			Empty: true,
+	// 		}
+
+	// 		return // came to jail
+	// 	}
+	// } else {
+	// 	plr.DoubleCount = 0
+	// }
+
+	plr.Position += diceSum
+
+	if plr.Position >= len(g.Board) {
+		plr.Balance += 200           // for the round
+		plr.Position -= len(g.Board) // new round
+	}
+
+	field, _ := g.getPropertyByIndex(plr.Position)
+
+	if field.Buyable {
+		if field.isFree() {
+			result.Status = RollAction_Buy
+
+			return
+			// // Send message to WebSocket connection
+			// msg := fmt.Sprintf("%s landed on an unowned property. Would you like to buy %s for %d?", plr.Name, field.Name, field.Price)
+			// err := wsConn.WriteMessage(websocket.TextMessage, []byte(msg))
+			// if err != nil {
+			// 	log.Println("Failed to write message to WebSocket:", err)
+			// 	return
+			// }
+			// // Read response from WebSocket connection
+			// input, err := readFromWebSocket()
+			// if err != nil {
+			// 	log.Println("Failed to read input from WebSocket:", err)
+			// 	return
+			// }
+			// if input == "y" {
+			// 	g.Players[player].Balance -= property.Price
+			// 	property.Owner = g.Players[player].Name
+			// }
+		} else {
+			result.Status = RollAction_PayRent
+
+			return
+			// // Send message to WebSocket connection
+			// msg := fmt.Sprintf("%s landed on %s, owned by %s. Pay %d.", plr.Name, field.Name, field.Owner, field.Rent)
+			// err := wsConn.WriteMessage(websocket.TextMessage, []byte(msg))
+			// if err != nil {
+			// 	log.Println("Failed to write message to WebSocket:", err)
+			// 	return
+			// }
+			// g.Players[player].Balance -= property.Rent
+			// g.Players[property.Owner].Balance += property.Rent
 		}
 	}
 
-	if double && !wasInJail {
-		plr.doubleCount++
-		if plr.checkDoubleToJail() {
-			plr.jail()
+	// canBuy,
+	// 	payToOther,
+	// 	moneyFlow,
+	// 	recalculateField,
+	// 	chanceCard := g.CalculateField(plr, diceSum)
 
-			result = &RollResult{
-				Empty: true,
-			}
+	// if canBuy {
+	// 	prop, _ := g.getPropertyByIndex(plr.Position)
+	// 	result = &RollResult{
+	// 		BuyFieldInfo: prop,
+	// 		WasDouble:    double,
+	// 	}
 
-			return // came to jail
-		}
-	} else {
-		plr.doubleCount = 0
+	// 	return
+	// }
+
+	// result = &RollResult{
+	// 	CardText:  chanceCard,
+	// 	WasDouble: double,
+	// }
+
+	// if moneyFlow < 0 { // Player needs to pay
+	// 	if plr.Balance+moneyFlow < 0 { // Player has less money than need to pay
+	// 		result.MoneyFlow = moneyFlow
+	// 		result.ContinueAction = true
+
+	// 		return // pay money alert
+	// 	}
+	// }
+
+	// if payToOther {
+	// 	plr2 := g.getAnotherPlayer(plr.Index)
+	// 	plr2.Balance -= moneyFlow
+	// }
+
+	// plr.Balance += moneyFlow
+
+	// result.RecalculateField = recalculateField
+
+	return
+}
+
+func (g *GameState) CalculateRollActionResult(plr *Player, result RollActionResult) gin.H {
+	switch result.Status {
+	case RollAction_Buy:
+		field, _ := g.getPropertyByIndex(plr.Position)
+
+		msg := fmt.Sprintf("%s став на поле %s. Його ціна %d.", plr.Name, field.Name, field.Price)
+
+		return gin.H{"msg": msg, "result": result}
+	case RollAction_PayRent:
+		field, _ := g.getPropertyByIndex(plr.Position)
+
+		pay := field.getAmountToPay()
+
+		msg := fmt.Sprintf("%s став на поле %s гравця %s. Ціна аренди складає: %d.", plr.Name, field.Name, field.OwnerName, pay)
+
+		return gin.H{"msg": msg, "result": result}
 	}
 
-	plr.fieldIndex += diceSum
+	return gin.H{"result": result}
+}
 
-	if plr.fieldIndex >= 40 {
-		plr.money += 200     // for the round
-		plr.fieldIndex -= 40 // new round
-	}
-
-	canBuy,
-		payToOther,
-		moneyFlow,
-		recalculateField,
-		chanceCard := g.CalculateField(plr, diceSum)
-
-	if canBuy {
-		prop, _ := g.getPropertyByIndex(plr.fieldIndex)
-		result = &RollResult{
-			BuyFieldInfo: prop,
-			WasDouble:    double,
-		}
+func (g *GameState) Buy(plr *Player) (answer gin.H, ok bool) {
+	field, exists := g.getPropertyByIndex(plr.Position)
+	if !exists {
+		answer = gin.H{"error": "field does not exists"}
 
 		return
 	}
 
-	result = &RollResult{
-		CardText:  chanceCard,
-		WasDouble: double,
+	if !field.Buyable || !field.isFree() {
+		answer = gin.H{"error": "cannot buy this field"}
+
+		return
 	}
 
-	if moneyFlow < 0 { // player needs to pay
-		if plr.money+moneyFlow < 0 { // player has less money than need to pay
-			result.MoneyFlow = moneyFlow
-			result.ContinueAction = true
+	if field.Price > plr.Balance {
+		answer = gin.H{"error": "not enough money"}
 
-			return // pay money alert
-		}
+		return
 	}
 
-	if payToOther {
-		plr2 := g.getAnotherPlayer(plr.playerID)
-		plr2.money -= moneyFlow
+	plr.Balance -= field.Price
+	field.Owner = plr.SessionID
+	ok = true
+
+	msg := fmt.Sprintf("%s придбав %s.", plr.Name, field.Name)
+	answer = gin.H{"msg": msg}
+
+	return
+}
+
+func (g *GameState) PayRent(plr *Player) (answer gin.H, ok bool) {
+	field, exists := g.getPropertyByIndex(plr.Position)
+	if !exists {
+		answer = gin.H{"error": "field does not exists"}
+
+		return
 	}
 
-	plr.money += moneyFlow
+	anotherPlr, found := g.getPlayerByID(field.Owner)
+	if !found {
+		answer = gin.H{"error": "unknown player to pay"}
 
-	result.RecalculateField = recalculateField
+		return
+	}
+
+	pay := field.getAmountToPay()
+	if pay > plr.Balance {
+		answer = gin.H{"error": "not enough money"}
+
+		return
+	}
+
+	plr.Balance -= pay
+	anotherPlr.Balance += pay
+	ok = true
+
+	msg := fmt.Sprintf("%s заплатив аренду %s у розмірі %d.", plr.Name, anotherPlr.Name, pay)
+	answer = gin.H{"msg": msg}
 
 	return
 }

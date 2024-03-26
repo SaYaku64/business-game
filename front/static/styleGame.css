@@ -489,7 +489,22 @@
   opacity: .5;
   transform: scale(.75);
 }
+
 .playerplate h3::after {
+  content: 'm';
+  padding-left: 2px;
+  opacity: .7;
+}
+
+#buyPlate span h5::before {
+  content: '$';
+  display: inline-block;
+  padding-right: 1px;
+  opacity: .5;
+  transform: scale(.75);
+}
+
+#buyPlate span h5::after {
   content: 'm';
   padding-left: 2px;
   opacity: .7;

@@ -38,6 +38,26 @@ class FrontWS{
         }
     }
 
+    acceptMsgGame(msg){
+        console.log("acceptMsgGame", msg)
+
+        if (msg.match("^{")) {
+            let jObj = JSON.parse(msg)
+            if (jObj.struct == true) {
+                // $(".overflow-auto").append("<p class='small'>"+jObj.msg+"</p>");
+                $("#chatBottom").prepend("<p class='small'>"+jObj.msg+"</p>");
+                return
+            }
+        }
+        
+        if (msg == "take turn") {
+            $('#turnPlate').show();
+
+            return
+        }
+
+    }
+
     connect(){
         console.log("connect");
         var socket = new WebSocket("ws://localhost:8080/ws");
@@ -65,7 +85,7 @@ class FrontWS{
 
         socket.onmessage = (e)=>{
         //    this.showMessage(e.data, false);
-           this.acceptMsg(e.data)
+           this.acceptMsgGame(e.data)
         }
         
         socket.onopen =  ()=> {

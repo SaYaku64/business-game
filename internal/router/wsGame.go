@@ -1,17 +1,51 @@
 package router
 
 import (
+	"encoding/json"
+
 	a "github.com/SaYaku64/business-game/internal/alert"
 	"github.com/gin-gonic/gin"
 	"github.com/gorilla/websocket"
 )
 
-type Lobby struct {
-	ID      string   `json:"id"`
-	Players []string `json:"players"`
+type GameLobby struct {
+	ID      string   `json:"id"`      // lobbyID
+	Players []string `json:"players"` // sessionIDs
+	conns   []*websocket.Conn
 }
 
-var lobbies = make(map[string]*Lobby)
+func (r *Router) NextPlayerTurn(lobbyID, sessionID string) {
+	r.gMux.RLock()
+	gLobby, found := r.games[lobbyID]
+	r.gMux.RUnlock()
+	if !found {
+		return
+	}
+
+	for i := range gLobby.conns {
+		if gLobby.Players[i] == sessionID {
+			gLobby.conns[i].WriteMessage(websocket.TextMessage, []byte("take turn"))
+		}
+	}
+}
+
+func (r *Router) SendMsgChat(lobbyID string, data gin.H) {
+	r.gMux.RLock()
+	gLobby, found := r.games[lobbyID]
+	r.gMux.RUnlock()
+	if !found {
+		return
+	}
+
+	data["struct"] = true
+
+	bMsg, _ := json.Marshal(data)
+
+	for i := range gLobby.conns {
+		gLobby.conns[i].WriteMessage(websocket.TextMessage, bMsg)
+
+	}
+}
 
 func (r *Router) HandleWSGame(c *gin.Context) {
 	conn, err := upgrader.Upgrade(c.Writer, c.Request, nil)
@@ -24,32 +58,36 @@ func (r *Router) HandleWSGame(c *gin.Context) {
 	lobbyID := c.Query("lobbyID")
 	sessionID := c.Query("sessionID")
 
-	if lobby, ok := lobbies[lobbyID]; ok {
-		a.Info.Println("lobbies[lobbyID] ok")
+	r.gMux.Lock()
+	if lobby, ok := r.games[lobbyID]; ok {
+		a.Info.Println("games[lobbyID] ok")
 		lobby.Players = append(lobby.Players, sessionID)
-		lobbies[lobbyID] = lobby
-		a.Info.Println("lobbies[lobbyID] ok, lobby", *lobby)
+		lobby.conns = append(lobby.conns, conn)
+		r.games[lobbyID] = lobby
+		a.Info.Println("games[lobbyID] ok, lobby", *lobby)
 	} else {
-		a.Info.Println("lobbies[lobbyID] !ok")
-		lobby := &Lobby{
+		a.Info.Println("games[lobbyID] !ok")
+		lobby := &GameLobby{
 			ID:      lobbyID,
 			Players: []string{sessionID},
+			conns:   []*websocket.Conn{conn},
 		}
-		lobbies[lobbyID] = lobby
-		a.Info.Println("lobbies[lobbyID] ok, lobby", *lobby)
+		r.games[lobbyID] = lobby
+		a.Info.Println("games[lobbyID] ok, lobby", *lobby)
 	}
+	r.gMux.Unlock()
 
-	readGameMsgs(conn, sessionID, lobbyID)
+	r.readGameMsgs(conn, sessionID, lobbyID)
 }
 
-func readGameMsgs(
+func (r *Router) readGameMsgs(
 	conn *websocket.Conn,
 	sessionID, lobbyID string,
 ) {
 	for {
 		_, byteMsg, err := conn.ReadMessage()
 		if err != nil {
-			deletePlayerFromLobby(sessionID, lobbyID)
+			r.deletePlayerFromGame(sessionID, lobbyID)
 
 			a.Error.Printf("conn.ReadMessage error. lobbyID: %s; sessionID: %s; err: %s\n", lobbyID, sessionID, err.Error())
 			break
@@ -59,13 +97,16 @@ func readGameMsgs(
 	}
 }
 
-func deletePlayerFromLobby(sessionID, lobbyID string) {
-	lobby := lobbies[lobbyID]
+func (r *Router) deletePlayerFromGame(sessionID, lobbyID string) {
+	r.gMux.Lock()
+	lobby := r.games[lobbyID]
 	for i, player := range lobby.Players {
 		if player == sessionID {
 			lobby.Players = append(lobby.Players[:i], lobby.Players[i+1:]...)
+			lobby.conns = append(lobby.conns[:i], lobby.conns[i+1:]...)
 			break
 		}
 	}
-	lobbies[lobbyID] = lobby
+	r.games[lobbyID] = lobby
+	r.gMux.Unlock()
 }

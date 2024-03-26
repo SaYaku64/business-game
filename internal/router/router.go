@@ -2,7 +2,9 @@ package router
 
 import (
 	"path/filepath"
+	"sync"
 
+	"github.com/SaYaku64/business-game/internal/game"
 	"github.com/SaYaku64/business-game/internal/lobby"
 	"github.com/SaYaku64/business-game/internal/naming"
 	"github.com/gin-contrib/static"
@@ -11,16 +13,21 @@ import (
 
 type Router struct {
 	engine *gin.Engine
+	games  map[string]*GameLobby
+	gMux   sync.RWMutex
 
 	lm *lobby.LobbyModule
+	gm *game.GameModule
 }
 
-func NewRouter(lm *lobby.LobbyModule) *Router {
+func NewRouter(lm *lobby.LobbyModule, gm *game.GameModule) *Router {
 	router := gin.Default()
 
 	return &Router{
 		engine: router,
+		games:  make(map[string]*GameLobby),
 		lm:     lm,
+		gm:     gm,
 	}
 }
 
@@ -57,6 +64,11 @@ func (r *Router) initializeRoutes() {
 	// apiV1.GET("/redirectToLobby", r.RedirectToLobby)
 	apiV1.POST("/checkActiveGame", r.CheckActiveGame)
 	apiV1.POST("/isLobbyExists", r.IsLobbyExists)
+
+	apiGame := apiV1.Group("/game")
+	apiGame.GET("/turn", r.Turn)
+	apiGame.GET("/buy", r.Buy)
+	apiGame.GET("/payRent", r.PayRent)
 
 	// router.POST("/login", performLogin)
 	// router.POST("/register", register)

@@ -9,17 +9,12 @@ func genDices() (int, int) {
 	s := rand.NewSource(time.Now().Unix())
 	r := rand.New(s)
 
-	first := r.Intn(6)
-	second := r.Intn(6)
+	first := r.Intn(6) + 1
+	second := r.Intn(6) + 1
 
 	return first, second
 }
 
-func sumDices() (sum int, isDouble bool) {
-	first, second := genDices()
-
-	sum = first + second
-	isDouble = first == second
-
-	return
+func sumDices(first, second int) (sum int, isDouble bool) {
+	return first + second, first == second
 }
