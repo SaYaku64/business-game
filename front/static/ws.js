@@ -44,7 +44,17 @@ class FrontWS {
         switch (obj.type) {
             case "chat msg":
                 $("#chatBottom").prepend("<p class='small'>" + obj.msg + "</p>");
+                if (obj.result.firstDice != null && obj.result.firstDice != undefined) {
+                    $(".dice").hide()
+                    window.showFirstDice(obj.result.firstDice)
+                    window.showSecondDice(obj.result.secondDice)
+                }
                 break;
+            // case "dices":
+            //     $(".dice").hide()
+            //     window.showDice(obj.dice1)
+            //     window.showDice(obj.dice2)
+            //     break;
             case "take turn":
                 if (obj.index != null) {
                     window.toggleActivePlate(obj.index)

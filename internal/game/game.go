@@ -341,7 +341,7 @@ func (g *GameState) CalculateRollActionResult(plr *Player, result RollActionResu
 	case RollAction_Buy:
 		field, _ := g.getPropertyByIndex(plr.Position)
 
-		msg := fmt.Sprintf("%s став на поле %s. Його ціна %d.", plr.Name, field.Name, field.Price)
+		msg := fmt.Sprintf("<b>%s</b> став на поле <b>%s</b>. Його ціна %d.", plr.Name, field.Name, field.Price)
 
 		return gin.H{"msg": msg, "result": result}
 	case RollAction_PayRent:
@@ -349,7 +349,7 @@ func (g *GameState) CalculateRollActionResult(plr *Player, result RollActionResu
 
 		pay := field.getAmountToPay()
 
-		msg := fmt.Sprintf("%s став на поле %s гравця %s. Ціна аренди складає: %d.", plr.Name, field.Name, field.OwnerName, pay)
+		msg := fmt.Sprintf("<b>%s</b> став на поле <b>%s</b> гравця <b>%s</b>. Ціна аренди складає: <b>%d</b>.", plr.Name, field.Name, field.OwnerName, pay)
 
 		return gin.H{"msg": msg, "result": result}
 	}
@@ -381,7 +381,7 @@ func (g *GameState) Buy(plr *Player) (answer gin.H, ok bool) {
 	field.Owner = plr.SessionID
 	ok = true
 
-	msg := fmt.Sprintf("%s придбав %s.", plr.Name, field.Name)
+	msg := fmt.Sprintf("<b>%s</b> придбав <b>%s</b>.", plr.Name, field.Name)
 	answer = gin.H{"msg": msg, "index": plr.Position, "plr": plr.Index}
 
 	return
@@ -413,7 +413,7 @@ func (g *GameState) PayRent(plr *Player) (answer gin.H, ok bool) {
 	anotherPlr.Balance += pay
 	ok = true
 
-	msg := fmt.Sprintf("%s заплатив аренду %s у розмірі %d.", plr.Name, anotherPlr.Name, pay)
+	msg := fmt.Sprintf("<b>%s</b> заплатив аренду <b>%s</b> у розмірі <b>%d</b>.", plr.Name, anotherPlr.Name, pay)
 	answer = gin.H{"msg": msg}
 
 	return

@@ -1,4 +1,8 @@
 $("document").ready(() => {
+    var audioElement = document.createElement('audio');
+    audioElement.setAttribute('src', '/dice.mp3');
+    
+    $(".dice").hide()
     window.WS = new FrontWS()
     window.WS.connectGame();
 
@@ -49,11 +53,59 @@ $("document").ready(() => {
         }
     }
 
+    window.showFirstDice = function showFirstDice(id) {
+        audioElement.play();
+        switch (id) {
+            case 1:
+                $(".dice.first.first-face").show()
+                return
+            case 2:
+                $(".dice.first.second-face").show()
+                return
+            case 3:
+                $(".dice.first.third-face").show()
+                return
+            case 4:
+                $(".dice.first.fourth-face").show()
+                return
+            case 5:
+                $(".dice.first.fifth-face").show()
+                return
+            case 6:
+                $(".dice.first.sixth-face").show()
+                return
+        }
+    }
+
+    window.showSecondDice = function showSecondDice(id) {
+        switch (id) {
+            case 1:
+                $(".dice.second.first-face").show()
+                return
+            case 2:
+                $(".dice.second.second-face").show()
+                return
+            case 3:
+                $(".dice.second.third-face").show()
+                return
+            case 4:
+                $(".dice.second.fourth-face").show()
+                return
+            case 5:
+                $(".dice.second.fifth-face").show()
+                return
+            case 6:
+                $(".dice.second.sixth-face").show()
+                return
+        }
+    }
+
     window.toggleActivePlate = function toggleActivePlate(id) {
         $("#player" + id + "-plate").toggleClass("grad-" + window.getColorById(id))
     }
 
     window.turn = function turn() {
+        $('#turnPlate button').prop("disabled", true);
         $.ajaxSetup({
             headers: {
                 'lobbyID': Cookies.get('lobbyID'),
@@ -62,9 +114,7 @@ $("document").ready(() => {
         });
         $.get("/api/v1/game/turn", function (data) {
             $('#turnPlate').hide();
-            //$(".overflow-auto").append("<p class='small'>"+data.msg+"</p>");
-
-            alert("Dices: " + data.result.firstDice + " & " + data.result.secondDice)
+            $('#turnPlate button').prop("disabled", false);
 
             switch (data.result.status) {
                 case RollAction_Buy:
@@ -80,6 +130,7 @@ $("document").ready(() => {
     };
     
     window.buy = function buy() {
+        $('#buyPlate button').prop("disabled", true);
         $.ajaxSetup({
             headers: {
                 'lobbyID': Cookies.get('lobbyID'),
@@ -88,6 +139,7 @@ $("document").ready(() => {
         });
         $.get("/api/v1/game/buy", function (data) {
             $('#buyPlate').hide();
+            $('#buyPlate button').prop("disabled", false);
             //$(".overflow-auto").append("<p class='small'>"+data.msg+"</p>");
 
             console.log(data)
@@ -97,6 +149,7 @@ $("document").ready(() => {
     };
     
     window.payRent = function payRent() {
+        $('#payRentPlate button').prop("disabled", true);
         $.ajaxSetup({
             headers: {
                 'lobbyID': Cookies.get('lobbyID'),
@@ -105,6 +158,7 @@ $("document").ready(() => {
         });
         $.get("/api/v1/game/payRent", function (data) {
             $('#payRentPlate').hide();
+            $('#payRentPlate button').prop("disabled", false);
             //$(".overflow-auto").append("<p class='small'>"+data.msg+"</p>");
 
             console.log(data)
