@@ -83,6 +83,28 @@ func (r *Router) CheckActiveGame(c *gin.Context) {
 	}
 }
 
+func (r *Router) UpdatePlates(c *gin.Context) {
+	lobbyID := c.PostForm("lobbyID")
+
+	players, ok := r.gm.UpdatePlates(lobbyID)
+	if !ok {
+		c.Status(http.StatusBadRequest)
+		return
+	}
+
+	obj := []gin.H{}
+
+	for _, plr := range players {
+		obj = append(obj, gin.H{
+			"index":   plr.Index,
+			"name":    plr.Name,
+			"balance": plr.Balance,
+		})
+	}
+
+	c.JSON(http.StatusOK, obj)
+}
+
 func (r *Router) IsLobbyExists(c *gin.Context) {
 	lobbyID := c.PostForm("lobbyID")
 

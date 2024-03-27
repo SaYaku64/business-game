@@ -98,6 +98,15 @@ func (g *GameModule) CheckActiveGame(lobbyID, playerName, sessionID string) (act
 	return
 }
 
+func (g *GameModule) UpdatePlates(lobbyID string) (players []*Player, ok bool) {
+	game, found := g.GetGame(lobbyID)
+	if !found {
+		return
+	}
+
+	return game.Players, true
+}
+
 func (g *GameState) GetCurrentPlayer() (plr *Player) {
 	return g.Players[g.CurrentPlayer]
 }
@@ -384,6 +393,13 @@ func (g *GameState) Buy(plr *Player) (answer gin.H, ok bool) {
 	msg := fmt.Sprintf("<b>%s</b> придбав <b>%s</b>.", plr.Name, field.Name)
 	answer = gin.H{"msg": msg, "index": plr.Position, "plr": plr.Index}
 
+	answer["balUpd"] = []gin.H{
+		{
+			"index":   plr.Index,
+			"balance": plr.Balance,
+		},
+	}
+
 	return
 }
 
@@ -415,6 +431,17 @@ func (g *GameState) PayRent(plr *Player) (answer gin.H, ok bool) {
 
 	msg := fmt.Sprintf("<b>%s</b> заплатив аренду <b>%s</b> у розмірі <b>%d</b>.", plr.Name, anotherPlr.Name, pay)
 	answer = gin.H{"msg": msg}
+
+	answer["balUpd"] = []gin.H{
+		{
+			"index":   plr.Index,
+			"balance": plr.Balance,
+		},
+		{
+			"index":   anotherPlr.Index,
+			"balance": anotherPlr.Balance,
+		},
+	}
 
 	return
 }

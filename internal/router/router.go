@@ -66,6 +66,7 @@ func (r *Router) initializeRoutes() {
 	apiV1.POST("/isLobbyExists", r.IsLobbyExists)
 
 	apiGame := apiV1.Group("/game")
+	apiGame.POST("/updatePlates", r.UpdatePlates)
 	apiGame.GET("/turn", r.Turn)
 	apiGame.GET("/buy", r.Buy)
 	apiGame.GET("/payRent", r.PayRent)

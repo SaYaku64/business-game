@@ -56,6 +56,7 @@ func (r *Router) Buy(c *gin.Context) {
 	r.NextPlayerTurn(lobbyID, game.GetCurrentPlayer().SessionID, indexBefore, game.CurrentPlayer)
 	// r.SendMsgChat(lobbyID, answer)
 	r.SendUpdateField(lobbyID, answer)
+	r.SendUpdateBalance(lobbyID, answer)
 
 	c.JSON(http.StatusOK, answer)
 }
@@ -85,6 +86,7 @@ func (r *Router) PayRent(c *gin.Context) {
 	iB := game.NextPlayerTurn()
 	r.NextPlayerTurn(lobbyID, game.GetCurrentPlayer().SessionID, iB, game.CurrentPlayer)
 	r.SendMsgChat(lobbyID, answer)
+	r.SendUpdateBalance(lobbyID, answer)
 
 	c.JSON(status, answer)
 }

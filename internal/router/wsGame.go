@@ -60,6 +60,19 @@ func (r *Router) SendUpdateField(lobbyID string, data gin.H) {
 	}
 }
 
+func (r *Router) SendUpdateBalance(lobbyID string, data gin.H) {
+	r.gMux.RLock()
+	gLobby, found := r.games[lobbyID]
+	r.gMux.RUnlock()
+	if !found {
+		return
+	}
+
+	for i := range gLobby.conns {
+		gLobby.conns[i].WriteMessage(websocket.TextMessage, marshalWithType("update balance", data))
+	}
+}
+
 func marshalWithType(tpe string, data gin.H) (bytes []byte) {
 	data["type"] = tpe
 	bytes, _ = json.Marshal(data)

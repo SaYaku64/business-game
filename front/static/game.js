@@ -1,6 +1,8 @@
 $("document").ready(() => {
-    var audioElement = document.createElement('audio');
-    audioElement.setAttribute('src', '/dice.mp3');
+    window.audioDice = document.createElement('audio');
+    window.audioDice.setAttribute('src', '/sound/dice.mp3');
+    window.audioTurn = document.createElement('audio');
+    window.audioTurn.setAttribute('src', '/sound/turn.mp3');
     
     $(".dice").hide()
     window.WS = new FrontWS()
@@ -32,12 +34,22 @@ $("document").ready(() => {
         sessionID: Cookies.get('sessionID')
     }, function (data) {
         if (data.turn) {
+            window.audioTurn.play();
             $('#turnPlate').show();
         }
         window.toggleActivePlate(data.current)
     }).fail(function () {
         console.log("checkActiveGame failed")
         window.location.href = "/"
+    });
+
+    $.post("/api/v1/game/updatePlates", {
+        lobbyID: Cookies.get('lobbyID')
+    }, function (data) {
+        $.each(data, function(_,value) {
+            $('#player'+value.index+'-plate h4').text(value.name)
+            window.updateBalance(value.index, value.balance)
+        });
     });
 
     window.getColorById = function getColorById(id) {
@@ -53,8 +65,12 @@ $("document").ready(() => {
         }
     }
 
+    window.updateBalance = function updateBalance(id, value) {
+        $('#player'+id+'-plate h3').text(value)
+    }
+
     window.showFirstDice = function showFirstDice(id) {
-        audioElement.play();
+        window.audioDice.play();
         switch (id) {
             case 1:
                 $(".dice.first.first-face").show()
